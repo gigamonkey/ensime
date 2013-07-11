@@ -67,32 +67,28 @@ class ClassFileIndex(config: ProjectConfig) {
       (location, classReader) =>
         classReader.accept(new EmptyVisitor() {
           override def visitSource(source: String, debug: String) {
-            val set = classFilesForSourceName(source)
-            set += location
-            classFilesForSourceName(source) = set
-
-            val sourceSet = sourceNamesForClassFile(location)
-            sourceSet += source
-            sourceNamesForClassFile(location) = sourceSet
+            classFilesForSourceName(source)   += location
+            sourceNamesForClassFile(location) += source
           }
         }, ASMAcceptAll))
     val elapsed = System.currentTimeMillis() - t
+
     println("Finished indexing " +
       files.size + " classpath files in " +
       elapsed / 1000.0 + " seconds.")
   }
 
-  class MethodByteCodeFinder(targetSource: String, targetLine: Int)
-    extends EmptyVisitor with RichClassVisitor {
-    type Result = List[MethodBytecode]
-    private var quit: Boolean = false
-    private var className: String = ""
-    private val methods: ListBuffer[MethodBytecode] = ListBuffer()
-    def result: Option[List[MethodBytecode]] = Some(methods.toList)
+  class MethodByteCodeFinder(targetSource: String, targetLine: Int) extends EmptyVisitor with RichClassVisitor {
 
-    override def visit(version: Int, access: Int,
-      name: String, sig: String, superName: String,
-      interfaces: Array[String]) {
+    type Result = List[MethodBytecode]
+
+    private var quit = false
+    private var className = ""
+    private val methods: ListBuffer[MethodBytecode] = ListBuffer()
+
+    def result: Option[Result] = Some(methods.toList)
+
+    override def visit(version: Int, access: Int, name: String, sig: String, superName: String, interfaces: Array[String]) {
       className = name
     }
 
@@ -102,16 +98,13 @@ class ClassFileIndex(config: ProjectConfig) {
       }
     }
 
-    override def visitMethod(access: Int,
-      name: String,
-      description: String,
-      signature: String,
-      exceptions: Array[String]): MethodVisitor = {
+    override def visitMethod(access: Int, name: String, description: String, signature: String, exceptions: Array[String]): MethodVisitor = {
+
       if (!quit) {
         return new EmptyVisitor() with MethodDescriber {
-          var maxLine = Int.MinValue
-          var minLine = Int.MaxValue
-          var ops = ListBuffer[Op]()
+          var maxLine      = Int.MinValue
+          var minLine      = Int.MaxValue
+          var ops          = ListBuffer[Op]()
           var includesLine = false
 
           def appendOp(name: String, args: String): Unit = {
@@ -121,10 +114,12 @@ class ClassFileIndex(config: ProjectConfig) {
           override def visitLineNumber(line: Int, start: Label) {
             minLine = scala.math.min(minLine, line)
             maxLine = scala.math.max(maxLine, line)
-            if (targetLine >= minLine && targetLine <= maxLine) {
+
+            if (minLine <= targetLine && targetLine <= maxLine) {
               includesLine = true
             }
           }
+
           override def visitEnd() {
             if (includesLine) {
               methods += MethodBytecode(className,
@@ -139,9 +134,9 @@ class ClassFileIndex(config: ProjectConfig) {
     }
   }
 
-  def locateBytecode(
-    sourceName: String,
-    line: Int): List[MethodBytecode] = {
+  def locateBytecode(sourceName: String, line: Int): List[MethodBytecode] = {
+
+    // WTF: Is this extension argument supposed to be used in the call to endsWith?
     def forFileType(extension: String): List[MethodBytecode] = {
       classFilesForSourceName(sourceName).filter { loc => loc.file.endsWith(".class") }.flatMap { f =>
         ClassIterator.findInClasses(
@@ -149,25 +144,27 @@ class ClassFileIndex(config: ProjectConfig) {
           new MethodByteCodeFinder(sourceName, line)).getOrElse(List())
       }.toList.sortBy(_.startLine * -1)
     }
+
     val fromClasses = forFileType(".class")
     if (!fromClasses.isEmpty) fromClasses else forFileType(".jar")
   }
 
-  def sourceFileCandidates(
-    enclosingPackage: String,
-    classNamePrefix: String): Set[File] = {
+  def sourceFileCandidates(enclosingPackage: String, classNamePrefix: String): Set[File] = {
+
     println("Looking for " + (enclosingPackage, classNamePrefix))
     val subPath = enclosingPackage.replace(".", "/") + "/" + classNamePrefix
-    // TODO(aemoncannon): Build lookup structure to make this more efficient.
+
+
     if (System.getProperty("ensime.log.symbol.lookup") != null) {
       println("subPath is " + subPath)
       println("sourceNamesForClassFile is " + sourceNamesForClassFile)
     }
+
+    // TODO(aemoncannon): Build lookup structure to make this more efficient
     val sourceNames: Set[String] = sourceNamesForClassFile.collect {
-      case (loc, sourceNames) if (
-        loc.file.contains(subPath) ||
-        loc.entry.contains(subPath)) => sourceNames
+      case (loc, sourceNames) if (loc.file.contains(subPath) || loc.entry.contains(subPath)) => sourceNames
     }.flatten.toSet
+
     sourceNames.flatMap { sourceName =>
       allSources.filter(_.getName() == sourceName)
     }

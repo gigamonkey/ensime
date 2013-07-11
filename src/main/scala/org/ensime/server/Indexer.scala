@@ -177,13 +177,40 @@ object Indexer {
   }
 }
 
-
-
 /**
  * Helper mixin for interfacing compiler (Symbols)
  * with the indexer.
  */
 trait IndexerInterface { self: RichPresentationCompiler =>
+
+  def indexTopLevelSyms(syms: Iterable[Symbol]) {
+    val infos = new ArrayBuffer[SymbolSearchResult]
+    for (sym <- syms) {
+      if (Indexer.isValidType(typeSymName(sym))) {
+        val key = lookupKey(sym)
+        infos += sym
+        for (mem <- try { sym.tpe.members } catch { case e => { List() } }) {
+          if (Indexer.isValidMethod(mem.nameString)) {
+            val key = lookupKey(mem)
+            infos += mem
+          }
+        }
+      }
+    }
+    indexer ! AddSymbolsReq(infos)
+  }
+
+  def unindexTopLevelSyms(syms: Iterable[Symbol]) {
+    val keys = new ArrayBuffer[String]
+    for (sym <- syms) {
+      keys += lookupKey(sym)
+      for (mem <- try { sym.tpe.members } catch { case e => List() }) {
+        keys += lookupKey(mem)
+      }
+    }
+    indexer ! RemoveSymbolsReq(keys)
+  }
+
 
   private def isType(sym: Symbol): Boolean = {
     sym.isClass || sym.isModule || sym.isInterface
@@ -198,17 +225,6 @@ trait IndexerInterface { self: RichPresentationCompiler =>
   private def lookupKey(sym: Symbol): String = {
     if (isType(sym)) typeSymName(sym)
     else typeSymName(sym.owner) + "." + sym.nameString
-  }
-
-  def unindexTopLevelSyms(syms: Iterable[Symbol]) {
-    val keys = new ArrayBuffer[String]
-    for (sym <- syms) {
-      keys += lookupKey(sym)
-      for (mem <- try { sym.tpe.members } catch { case e => List() }) {
-        keys += lookupKey(mem)
-      }
-    }
-    indexer ! RemoveSymbolsReq(keys)
   }
 
   private implicit def symToSearchResult(sym: Symbol): SymbolSearchResult = {
@@ -232,20 +248,4 @@ trait IndexerInterface { self: RichPresentationCompiler =>
     }
   }
 
-  def indexTopLevelSyms(syms: Iterable[Symbol]) {
-    val infos = new ArrayBuffer[SymbolSearchResult]
-    for (sym <- syms) {
-      if (Indexer.isValidType(typeSymName(sym))) {
-        val key = lookupKey(sym)
-        infos += sym
-        for (mem <- try { sym.tpe.members } catch { case e => { List() } }) {
-          if (Indexer.isValidMethod(mem.nameString)) {
-            val key = lookupKey(mem)
-            infos += mem
-          }
-        }
-      }
-    }
-    indexer ! AddSymbolsReq(infos)
-  }
 }

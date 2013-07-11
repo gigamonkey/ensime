@@ -238,9 +238,11 @@ trait ModelBuilders { self: RichPresentationCompiler =>
     typeCache.clear
     typeCacheReverse.clear
   }
+
   def typeById(id: Int): Option[Type] = {
     typeCache.get(id)
   }
+
   def cacheType(tpe: Type): Int = {
     if (typeCacheReverse.contains(tpe)) {
       typeCacheReverse(tpe)

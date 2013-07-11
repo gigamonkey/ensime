@@ -55,10 +55,8 @@ case class ReloadFilesReq(files: List[File])
 case class ReloadAllReq()
 case class PatchSourceReq(file: File, edits: List[PatchOp])
 case class RemoveFileReq(file: File)
-case class CompletionsReq(
-  file: File, point: Int, maxResults: Int, caseSens: Boolean, reload: Boolean)
-case class ImportSuggestionsReq(
-  file: File, point: Int, names: List[String], maxResults: Int)
+case class CompletionsReq(file: File, point: Int, maxResults: Int, caseSens: Boolean, reload: Boolean)
+case class ImportSuggestionsReq(file: File, point: Int, names: List[String], maxResults: Int)
 case class PublicSymbolSearchReq(names: List[String], maxResults: Int)
 case class MethodBytecodeReq(sourceName: String, line: Int)
 case class UsesOfSymAtPointReq(file: File, point: Int)
