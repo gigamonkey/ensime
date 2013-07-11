@@ -45,10 +45,12 @@ trait FileEdit {
   def to: Int
 }
 case class TextEdit(file: File, from: Int, to: Int, text: String) extends FileEdit {}
+
 case class NewFile(file: File, text: String) extends FileEdit {
   def from: Int = 0
   def to: Int = text.length - 1
 }
+
 case class DeleteFile(file: File, text: String) extends FileEdit {
   def from: Int = 0
   def to: Int = text.length - 1
@@ -80,6 +82,7 @@ class RichFile(file: File) {
     override def iterator = (if (file.isDirectory) file.listFiles.iterator else Iterator.empty)
   }
 
+  // FIXME: to stream
   def andTree: Iterable[File] = (Seq(file) ++ children.flatMap(child => new RichFile(child).andTree))
 
 }
@@ -435,4 +438,3 @@ object FileUtils {
   }
 
 }
-

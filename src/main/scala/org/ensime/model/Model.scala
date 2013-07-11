@@ -26,14 +26,14 @@
  */
 
 package org.ensime.model
+
 import java.io.File
-import scala.collection.mutable.{ HashMap, ArrayBuffer }
-import scala.tools.nsc.interactive.{ Global, CompilerControl }
-import scala.tools.nsc.util.{ NoPosition, Position }
-import scala.tools.nsc.io.{ AbstractFile }
+import org.ensime.server.{RichPresentationCompiler, SourceFileCandidatesReq}
 import org.ensime.util.CanonFile
-import org.ensime.server.RichPresentationCompiler
-import org.ensime.server.SourceFileCandidatesReq
+import scala.collection.mutable.{ArrayBuffer, HashMap}
+import scala.tools.nsc.interactive.CompilerControl
+import scala.tools.nsc.io.AbstractFile
+import scala.tools.nsc.util.{NoPosition, Position}
 
 abstract class EntityInfo(val name: String, val members: Iterable[EntityInfo]) {}
 
@@ -262,7 +262,7 @@ trait ModelBuilders { self: RichPresentationCompiler =>
       indexer !? (1000, SourceFileCandidatesReq(pack, name)) match {
         case Some(files: Set[File]) => {
           files.flatMap { f =>
-	    println("Linking:" + (sym, f))
+            println("Linking:" + (sym, f))
             askLinkPos(sym, f.getAbsolutePath)
           }.filter(_.isDefined).headOption.getOrElse(NoPosition)
         }
@@ -559,4 +559,3 @@ trait ModelBuilders { self: RichPresentationCompiler =>
   }
 
 }
-

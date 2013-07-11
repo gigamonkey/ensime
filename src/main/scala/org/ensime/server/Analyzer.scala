@@ -52,7 +52,8 @@ class Analyzer(
   val indexer: Actor,
   val protocol: ProtocolConversions,
   val config: ProjectConfig)
-  extends Actor with RefactoringHandler {
+  extends Actor with RefactoringHandler
+{
 
   private val settings = new Settings(Console.println)
   println("ExtraArgs: " + config.compilerArgs)
@@ -85,10 +86,9 @@ class Analyzer(
 
   private val reporter = new PresentationReporter(reportHandler)
 
-  protected val scalaCompiler: RichCompilerControl = new RichPresentationCompiler(
-    settings, reporter, this, indexer, config)
-  protected val javaCompiler: JavaCompiler = new JavaCompiler(
-    config, reportHandler, indexer)
+  protected val scalaCompiler: RichCompilerControl = new RichPresentationCompiler(settings, reporter, this, indexer, config)
+  protected val javaCompiler: JavaCompiler = new JavaCompiler(config, reportHandler, indexer)
+
   protected var awaitingInitialCompile = true
   protected var initTime: Long = 0
 
@@ -157,16 +157,16 @@ class Analyzer(
                   }
 
                   case ReloadFilesReq(files: List[File]) => {
-		    val (javas, scalas) = files.filter(_.exists).partition(
-		      _.getName.endsWith(".java"))
-		    if (!javas.isEmpty) {
-		      javaCompiler.compileFiles(javas)
-		    }
-		    if (!scalas.isEmpty) {
-		      scalaCompiler.askReloadFiles(scalas.map(createSourceFile))
+                    val (javas, scalas) = files.filter(_.exists).partition(
+                      _.getName.endsWith(".java"))
+                    if (!javas.isEmpty) {
+                      javaCompiler.compileFiles(javas)
+                    }
+                    if (!scalas.isEmpty) {
+                      scalaCompiler.askReloadFiles(scalas.map(createSourceFile))
                       scalaCompiler.askNotifyWhenReady()
                       project ! RPCResultEvent(toWF(true), callId)
-		    }
+                    }
                   }
 
                   case PatchSourceReq(
@@ -302,24 +302,24 @@ class Analyzer(
                   }
 
                   case SymbolDesignationsReq(file: File, start: Int,
-		    end: Int, tpes: List[Symbol]) => {
-		    if (!FileUtils.isScalaSourceFile(file)) {
-		      project ! RPCResultEvent(
-			toWF(SymbolDesignations(file.getPath, List())), callId)
-		    } else {
+                    end: Int, tpes: List[Symbol]) => {
+                    if (!FileUtils.isScalaSourceFile(file)) {
+                      project ! RPCResultEvent(
+                        toWF(SymbolDesignations(file.getPath, List())), callId)
+                    } else {
                     val f = createSourceFile(file)
                     val clampedEnd = math.max(end, start)
                     val pos = new RangePosition(f, start, start, clampedEnd)
                     if (!tpes.isEmpty) {
                       val syms = scalaCompiler.askSymbolDesignationsInRegion(
-			pos, tpes)
+                        pos, tpes)
                       project ! RPCResultEvent(toWF(syms), callId)
                     } else {
                       project ! RPCResultEvent(
-			toWF(SymbolDesignations(f.path, List())), callId)
+                        toWF(SymbolDesignations(f.path, List())), callId)
                     }
                   }
-		}
+                }
                 }
               }
             } catch {
@@ -369,4 +369,3 @@ class Analyzer(
   }
 
 }
-

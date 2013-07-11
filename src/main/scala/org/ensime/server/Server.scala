@@ -41,6 +41,8 @@ object Server {
     System.setProperty("actors.corePoolSize", "10")
     System.setProperty("actors.maxPoolSize", "100")
 
+    println("Starting escalier")
+
     args match {
       case Array(portfile) =>
         {
@@ -64,8 +66,7 @@ object Server {
               try {
                 val socket = listener.accept()
                 println("Got connection, creating handler...")
-                val handler = new SocketHandler(socket, protocol, project)
-                handler.start()
+                startSocketHandlers(socket, protocol, project)
               } catch {
                 case e: IOException =>
                   {
@@ -111,61 +112,53 @@ object Server {
         new Thread { override def run { new java.io.File(filename).delete } })
     }
   }
-}
 
-class SocketHandler(socket: Socket, protocol: Protocol, project: Project) extends Actor {
-  protocol.setOutputActor(this)
+  def startSocketHandlers(socket: Socket, protocol: Protocol, project: Project) {
 
-  class SocketReader(socket: Socket, handler: SocketHandler) extends Actor {
-    val in = new BufferedInputStream(socket.getInputStream());
-    def act() {
-      var running = true
+    val reader = actor {
       try {
-        while (running) {
-          val msg: WireFormat = protocol.readMessage(in)
-          handler ! IncomingMessageEvent(msg)
+        val in = new BufferedInputStream(socket.getInputStream());
+        while (true) {
+          // This has to burn a thread, blocking on the read.
+          project ! IncomingMessageEvent(protocol.readMessage(in))
         }
       } catch {
-        case e: IOException =>
-          {
-            System.err.println("Error in socket reader: " + e)
-            if (System.getProperty("ensime.explode.on.disconnect") != null) {
-              println("Tick-tock, tick-tock, tick-tock... boom!")
-              System.exit(-1)
-            } else exit('error)
+        case e: IOException => {
+          System.err.println("Error in socket reader: " + e)
+          if (System.getProperty("ensime.explode.on.disconnect") != null) {
+            println("Tick-tock, tick-tock, tick-tock... boom!")
+            System.exit(-1)
+          } else exit('error)
+        }
+      }
+    }
+
+    // This writer is the protocol's output actor. So when it wants to
+    // send a message it sends an OutgoingMessageEvent to writer which
+    // then turns around and calls writeMessage on the protocol. WTF?
+    // (The only way that makes any sense is that it does make sure
+    // that only one writeMessage happens at a time. But not clear it
+    // should live here.)
+    val writer = actor {
+      val out = new BufferedOutputStream(socket.getOutputStream())
+      loop {
+        receive { // react?
+          case OutgoingMessageEvent(value: WireFormat) => {
+            try {
+              protocol.writeMessage(value, out)
+            } catch {
+              case e: IOException => {
+                System.err.println("Write to client failed: " + e)
+                exit('error)
+              }
+            }
           }
+          case Exit(_, reason) => exit(reason)
+        }
       }
     }
-  }
 
-  val out = new BufferedOutputStream(socket.getOutputStream())
-
-  def write(value: WireFormat) {
-    try {
-      protocol.writeMessage(value, out)
-    } catch {
-      case e: IOException =>
-        {
-          System.err.println("Write to client failed: " + e)
-          exit('error)
-        }
-    }
-  }
-
-  def act() {
-    val reader = new SocketReader(socket, this)
-    this.link(reader)
-    reader.start()
-    loop {
-      receive {
-        case IncomingMessageEvent(value: WireFormat) => {
-          project ! IncomingMessageEvent(value)
-        }
-        case OutgoingMessageEvent(value: WireFormat) => {
-          write(value)
-        }
-        case Exit(_: SocketReader, reason) => exit(reason)
-      }
-    }
+    protocol.setOutputActor(writer)
+    writer.link(reader)
   }
 }

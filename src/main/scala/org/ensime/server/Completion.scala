@@ -43,7 +43,8 @@ trait CompletionControl {
     tpe: Type,
     constructing: Boolean,
     inherited: Boolean,
-    viaView: Symbol): List[CompletionInfo] = {
+    viaView: Symbol): List[CompletionInfo] =
+  {
 
     var score = 0
     if (sym.nameString.startsWith(prefix)) score += 10
@@ -82,7 +83,7 @@ trait CompletionControl {
         case Some(syms: List[SymbolSearchResult]) => {
           syms.map { s =>
             CompletionInfo(s.localName, CompletionSignature(List(), s.name),
-	      -1, false, 40, Some(s.name))
+              -1, false, 40, Some(s.name))
           }
         }
         case _ => List()
@@ -162,11 +163,14 @@ trait CompletionControl {
   private val ident = "[a-zA-Z0-9_]"
   private val nonIdent = "[^a-zA-Z0-9_]"
   private val ws = "[ \n\r\t]"
+  private val packRE = ("^.*?(?:package|import)[ ]+((?:[a-z0-9]+\\.)*)(?:(" + ident + "*)|\\{.*?(" + ident + "*))$").r
 
   trait CompletionContext {}
-
-  private val packRE = ("^.*?(?:package|import)[ ]+((?:[a-z0-9]+\\.)*)(?:(" + ident + "*)|\\{.*?(" + ident + "*))$").r
   case class PackageContext(path: String, prefix: String) extends CompletionContext
+  case class SymbolContext(p: Position, prefix: String, constructing: Boolean) extends CompletionContext
+  case class MemberContext(p: Position, prefix: String, constructing: Boolean) extends CompletionContext
+
+
   def packageContext(preceding: String): Option[PackageContext] = {
     if (packRE.findFirstMatchIn(preceding).isDefined) {
       val m = packRE.findFirstMatchIn(preceding).get
@@ -215,8 +219,6 @@ trait CompletionControl {
     p == 0
   }
 
-  case class SymbolContext(p: Position, prefix: String,
-    constructing: Boolean) extends CompletionContext
   def symContext(p: Position, preceding: String): Option[SymbolContext] = {
     var mo = nameFollowingWhiteSpaceRE.findFirstMatchIn(preceding)
     if (mo.isDefined) {
@@ -266,7 +268,6 @@ trait CompletionControl {
 
   private val memberRE = "([\\. ]+)([^\\. ]*)$".r
   private val memberConstructorRE = ("new ((?:[a-z0-9]+\\.)*)(" + ident + "*)$").r
-  case class MemberContext(p: Position, prefix: String, constructing: Boolean) extends CompletionContext
 
   def memberContext(p: Position, preceding: String): Option[MemberContext] = {
     memberRE.findFirstMatchIn(preceding) match {

@@ -75,24 +75,21 @@ case class DebugVmSuccess() extends DebugVmStatus
 case class DebugVmError(code: Int, details: String) extends DebugVmStatus
 
 abstract class DebugEvent
-case class DebugStepEvent(threadId: Long,
-  threadName: String, pos: SourcePosition) extends DebugEvent
-case class DebugBreakEvent(threadId: Long,
-  threadName: String, pos: SourcePosition) extends DebugEvent
+case class DebugStepEvent(threadId: Long, threadName: String, pos: SourcePosition) extends DebugEvent
+case class DebugBreakEvent(threadId: Long, threadName: String, pos: SourcePosition) extends DebugEvent
 case class DebugVMDeathEvent() extends DebugEvent
 case class DebugVMStartEvent() extends DebugEvent
 case class DebugVMDisconnectEvent() extends DebugEvent
-case class DebugExceptionEvent(excId: Long,
-  threadId: Long, threadName: String,
-  pos: Option[SourcePosition]) extends DebugEvent
+case class DebugExceptionEvent(excId: Long, threadId: Long, threadName: String, pos: Option[SourcePosition]) extends DebugEvent
 case class DebugThreadStartEvent(threadId: Long) extends DebugEvent
 case class DebugThreadDeathEvent(threadId: Long) extends DebugEvent
 case class DebugOutputEvent(out: String) extends DebugEvent
 
-class DebugManager(project: Project, indexer: Actor,
+class DebugManager(project: Project,
+  indexer: Actor,
   protocol: ProtocolConversions,
-  config: ProjectConfig) extends Actor {
-
+  config: ProjectConfig) extends Actor
+{
   import protocol._
 
   def ignoreErr[E <: Exception, T](action: => T, orElse: => T): T = {
@@ -303,12 +300,10 @@ class DebugManager(project: Project, indexer: Actor,
                   if (e.catchLocation() != null) locToPos(e.catchLocation()) else None)))
               }
               case e: ThreadDeathEvent => {
-                project ! AsyncEvent(toWF(DebugThreadDeathEvent(
-                  e.thread().uniqueID())))
+                project ! AsyncEvent(toWF(DebugThreadDeathEvent(e.thread().uniqueID())))
               }
               case e: ThreadStartEvent => {
-                project ! AsyncEvent(toWF(DebugThreadStartEvent(
-                  e.thread().uniqueID())))
+                project ! AsyncEvent(toWF(DebugThreadStartEvent(e.thread().uniqueID())))
               }
               case e: AccessWatchpointEvent => {}
               case e: ClassPrepareEvent => {
@@ -1134,4 +1129,3 @@ class DebugManager(project: Project, indexer: Actor,
     }
   }
 }
-

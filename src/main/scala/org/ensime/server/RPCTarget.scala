@@ -26,6 +26,7 @@
 */
 
 package org.ensime.server
+
 import java.io.File
 import org.ensime.config.ProjectConfig
 import org.ensime.model._
@@ -48,24 +49,24 @@ trait RPCTarget { self: Project =>
   import protocol._
 
   def rpcShutdownServer(callId: Int) {
-    sendRPCReturn(toWF(true), callId)
-    shutdownServer()
+    sendRPCReturn(toWF(true), callId) // protocol
+    shutdownServer() // project
   }
 
   def rpcInitProject(conf: ProjectConfig, callId: Int) {
-    initProject(conf)
-    sendRPCReturn(toWF(conf), callId)
+    initProject(conf) // project
+    sendRPCReturn(toWF(conf), callId) // protocol
   }
 
   def rpcPeekUndo(callId: Int) {
-    peekUndo match {
-      case Right(result) => sendRPCReturn(toWF(result), callId)
-      case Left(msg) => sendRPCError(ErrPeekUndoFailed, Some(msg), callId)
+    peekUndo match { // project
+      case Right(result) => sendRPCReturn(toWF(result), callId) // protocol
+      case Left(msg) => sendRPCError(ErrPeekUndoFailed, Some(msg), callId) // protocol?
     }
   }
 
   def rpcExecUndo(undoId: Int, callId: Int) {
-    execUndo(undoId) match {
+    execUndo(undoId) match { // project
       case Right(result) => sendRPCReturn(toWF(result), callId)
       case Left(msg) => sendRPCError(ErrExecUndoFailed, Some(msg), callId)
     }
@@ -241,7 +242,7 @@ trait RPCTarget { self: Project =>
 
   def rpcPrepareRefactor(refactorType: Symbol, procId: Int, params: immutable.Map[Symbol, Any], interactive: Boolean, callId: Int) {
     getAnalyzer ! RPCRequestEvent(RefactorPerformReq(
-	procId, refactorType, params, interactive), callId)
+        procId, refactorType, params, interactive), callId)
   }
 
   def rpcExecRefactor(refactorType: Symbol, procId: Int, callId: Int) {
@@ -280,7 +281,7 @@ trait RPCTarget { self: Project =>
         FileUtils.readFile(f) match {
           case Right(contents) => {
             val formatted = ScalaFormatter.format(
-	      contents, config.formattingPrefs)
+              contents, config.formattingPrefs)
             TextEdit(f, 0, contents.length, formatted)
           }
           case Left(e) => throw e

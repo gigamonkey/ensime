@@ -26,25 +26,17 @@
  */
 
 package org.ensime.indexer
+
 import java.io.File
 import org.ensime.config.ProjectConfig
-import org.ensime.util.ClassIterator
-import org.ensime.util.RichClassVisitor
-import org.ensime.util.CanonFile
-import org.ensime.util.ClassLocation
+import org.ensime.util.{CanonFile, ClassIterator, ClassLocation, RichClassVisitor}
+import org.objectweb.asm.{Label, MethodVisitor}
 import org.objectweb.asm.ClassReader
-import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.Label
-import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.commons.EmptyVisitor
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.HashSet
-import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.MultiMap
+import scala.collection.mutable.{HashMap, HashSet, ListBuffer, MultiMap}
 
-case class Op(
-  op: String,
-  description: String)
+case class Op(op: String, description: String)
+
 case class MethodBytecode(
   className: String,
   methodName: String,
@@ -182,4 +174,3 @@ class ClassFileIndex(config: ProjectConfig) {
   }
 
 }
-

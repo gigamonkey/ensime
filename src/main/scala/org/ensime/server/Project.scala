@@ -92,11 +92,11 @@ class Project(val protocol: Protocol) extends Actor with RPCTarget {
 
   def getAnalyzer: Actor = {
     analyzer.getOrElse(throw new RuntimeException(
-	"Analyzer unavailable."))
+        "Analyzer unavailable."))
   }
   def getIndexer: Actor = {
     indexer.getOrElse(throw new RuntimeException(
-	"Indexer unavailable."))
+        "Indexer unavailable."))
   }
 
 
@@ -106,6 +106,7 @@ class Project(val protocol: Protocol) extends Actor with RPCTarget {
   def sendRPCError(code: Int, detail: Option[String], callId: Int) {
     this ! RPCErrorEvent(code, detail, callId)
   }
+
   def sendRPCError(detail: String, callId: Int) {
     sendRPCError(ProtocolConst.ErrExceptionInRPC, Some(detail), callId)
   }
@@ -163,11 +164,11 @@ class Project(val protocol: Protocol) extends Actor with RPCTarget {
         undos.remove(u.id)
         FileUtils.writeChanges(u.changes) match {
           case Right(touched) => {
-	    for(ea <- analyzer) {
-	      ea ! ReloadFilesReq(touched.toList)
-	    }
-	    Right(UndoResult(undoId, touched))
-	  }
+            for(ea <- analyzer) {
+              ea ! ReloadFilesReq(touched.toList)
+            }
+            Right(UndoResult(undoId, touched))
+          }
           case Left(e) => Left(e.getMessage())
         }
       }
@@ -204,12 +205,12 @@ class Project(val protocol: Protocol) extends Actor with RPCTarget {
     }
     indexer match{
       case Some(indexer) => {
-	val newAnalyzer = new Analyzer(this, indexer, protocol, config)
-	newAnalyzer.start
-	analyzer = Some(newAnalyzer)
+        val newAnalyzer = new Analyzer(this, indexer, protocol, config)
+        newAnalyzer.start
+        analyzer = Some(newAnalyzer)
       }
       case None => {
-	throw new RuntimeException("Indexer must be started before analyzer.")
+        throw new RuntimeException("Indexer must be started before analyzer.")
       }
     }
   }
@@ -262,4 +263,3 @@ class Project(val protocol: Protocol) extends Actor with RPCTarget {
   }
 
 }
-

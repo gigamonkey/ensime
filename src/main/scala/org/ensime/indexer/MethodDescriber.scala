@@ -56,6 +56,7 @@
 */
 
 package org.ensime.indexer
+
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.commons.EmptyVisitor
 import org.objectweb.asm.Label
@@ -68,16 +69,16 @@ trait MethodDescriber extends MethodVisitor {
 
   import org.objectweb.asm.util.AbstractVisitor._
 
-  val INTERNAL_NAME = 0;
-  val FIELD_DESCRIPTOR = 1;
-  val FIELD_SIGNATURE = 2;
-  val METHOD_DESCRIPTOR = 3;
-  val METHOD_SIGNATURE = 4;
-  val CLASS_SIGNATURE = 5;
-  val TYPE_DECLARATION = 6;
-  val CLASS_DECLARATION = 7;
+  val INTERNAL_NAME          = 0;
+  val FIELD_DESCRIPTOR       = 1;
+  val FIELD_SIGNATURE        = 2;
+  val METHOD_DESCRIPTOR      = 3;
+  val METHOD_SIGNATURE       = 4;
+  val CLASS_SIGNATURE        = 5;
+  val TYPE_DECLARATION       = 6;
+  val CLASS_DECLARATION      = 7;
   val PARAMETERS_DECLARATION = 8;
-  val HANDLE_DESCRIPTOR = 9;
+  val HANDLE_DESCRIPTOR      = 9;
 
   def appendOp(name:String, args:String):Unit
   def appendOp(name:String):Unit = appendOp(name, "")
@@ -96,9 +97,9 @@ trait MethodDescriber extends MethodVisitor {
     labelNames.get(l) match {
       case Some(name) => name
       case _ => {
-	val name = "L" + labelNames.size
-	labelNames(l) = name
-	name
+        val name = "L" + labelNames.size
+        labelNames(l) = name
+        name
       }
     }
    }
@@ -182,11 +183,11 @@ trait MethodDescriber extends MethodVisitor {
   override def visitLdcInsn(cst: Object) {
     appendOp("LDC",
       if (cst.isInstanceOf[String]) {
-	"\"" + cst.toString + "\""
+        "\"" + cst.toString + "\""
       } else if (cst.isInstanceOf[Type]) {
-	cst.asInstanceOf[Type].getDescriptor()
+        cst.asInstanceOf[Type].getDescriptor()
       } else {
-	cst.toString
+        cst.toString
       })
   }
 
@@ -197,14 +198,14 @@ trait MethodDescriber extends MethodVisitor {
   override def visitTableSwitchInsn(min: Int, max: Int, dflt: Label, labels:Array[Label]) {
     appendOp("TABLESWITCH",
       labels.zipWithIndex.map { pair => (min + pair._2) + ": " + label(pair._1) }.mkString(",") +
-	"default: " + label(dflt))
+        "default: " + label(dflt))
   }
 
   override def visitLookupSwitchInsn(dflt: Label, keys: Array[Int],
     labels: Array[Label]) {
     appendOp("LOOKUPSWITCH",
       labels.zipWithIndex.map { pair => (keys(pair._2)) + ": " + label(pair._1) }.mkString(",") +
-	"default: " + label(dflt))
+        "default: " + label(dflt))
   }
 
   override def visitMultiANewArrayInsn(desc:String, dims:Int) {
