@@ -89,7 +89,7 @@ trait RichCompilerControl extends CompilerControl with RefactoringControl with C
     } catch {
       case fi: FailedInterrupt =>
         fi.getCause() match {
-	  // TODO(aemon): Remove.
+          // TODO(aemon): Remove.
           // xeno.by: InvalidCompanions has been removed in 2.10
           // case e @ InvalidCompanions(c1, c2) =>
           //   richReporter.warning(c1.pos, e.getMessage)
@@ -202,9 +202,17 @@ class RichPresentationCompiler(
   val richReporter: Reporter,
   var parent: Actor,
   var indexer: Actor,
-  val config: ProjectConfig) extends Global(settings, richReporter)
-  with NamespaceTraversal with ModelBuilders with RichCompilerControl
-  with RefactoringImpl with IndexerInterface with SemanticHighlighting with Completion with Helpers {
+  val config: ProjectConfig)
+    extends Global(settings, richReporter)
+    with NamespaceTraversal
+    with ModelBuilders
+    with RichCompilerControl
+    with RefactoringImpl
+    with IndexerInterface
+    with SemanticHighlighting
+    with Completion
+    with Helpers
+{
 
   private val symsByFile = new mutable.HashMap[AbstractFile, mutable.LinkedHashSet[Symbol]] {
     override def default(k: AbstractFile) = {
@@ -333,6 +341,7 @@ class RichPresentationCompiler(
   protected def inspectTypeAt(p: Position): Option[TypeInspectInfo] = {
     val members = getMembersForTypeAt(p)
     val preparedMembers = prepareSortedInterfaceInfo(members)
+
     typeAt(p).map { t =>
       new TypeInspectInfo(
         TypeInfo(t),
@@ -341,33 +350,15 @@ class RichPresentationCompiler(
     }
   }
 
-  private def typeOfTree(t: Tree): Option[Type] = {
-    var tree = t
-    tree = tree match {
-      case Select(qual, name) if tree.tpe == ErrorType => {
-        qual
-      }
-      case t: ImplDef if t.impl != null => {
-        t.impl
-      }
-      case t: ValOrDefDef if t.tpt != null => {
-        t.tpt
-      }
-      case t: ValOrDefDef if t.rhs != null => {
-        t.rhs
-      }
+  protected def typeAt(p: Position): Option[Type] = {
+    val tree = wrapTypedTreeAt(p) match {
+      case t @ Select(qual, _) if t.tpe  == ErrorType => qual
+      case t: ImplDef          if t.impl != null => t.impl
+      case t: ValOrDefDef      if t.tpt  != null => t.tpt
+      case t: ValOrDefDef      if t.rhs  != null => t.rhs
       case t => t
     }
-    if (tree.tpe != null) {
-      Some(tree.tpe)
-    } else {
-      None
-    }
-  }
-
-  protected def typeAt(p: Position): Option[Type] = {
-    val tree = wrapTypedTreeAt(p)
-    typeOfTree(tree)
+    Option(tree.tpe)
   }
 
   protected def typeByName(name: String): Option[Type] = {
@@ -507,13 +498,13 @@ class RichPresentationCompiler(
   }
 
   /*
-    * The following functions wrap up operations that interact with
-    * the presentation compiler. The wrapping just helps with the
-    * create response / compute / get result pattern.
-    *
-    * These units of work should probably be wrapped up into a
-    * Work monad that will make it easier to compose the operations.
-    */
+   * The following functions wrap up operations that interact with
+   * the presentation compiler. The wrapping just helps with the
+   * create response / compute / get result pattern.
+   *
+   * These units of work should probably be wrapped up into a
+   * Work monad that will make it easier to compose the operations.
+   */
 
   def wrap[A](compute: Response[A] => Unit, handle: Throwable => A): A = {
     val result = new Response[A]
@@ -549,4 +540,3 @@ class RichPresentationCompiler(
     wrap[Position](r => new AskLinkPosItem(sym, source, r).apply(), t => throw t)
 
 }
-

@@ -482,8 +482,8 @@ object ProjectConfig {
      *     speed up loading.
      *     For example:
      *     \begin{mylisting}
-     * 	   \begin{verbatim}:exclude-from-index ("com\\.sun\\..\*" "com\\.apple\\..\*")\end{verbatim}
-     * 	   \end{mylisting}
+     *     \begin{verbatim}:exclude-from-index ("com\\.sun\\..\*" "com\\.apple\\..\*")\end{verbatim}
+     *     \end{mylisting}
      *     This option can be used in conjunction with 'only-include-in-index' -
      *     the result when both are given is that the exclusion expressions are
      *     applied to the names that pass the inclusion filter.
@@ -556,27 +556,27 @@ object ProjectConfig {
      * Summary:
      *   Customize the behavior of the source formatter. All Scalariform
      *     preferences are supported:
-     * 	  \vspace{1 cm}
-     * 	  \begin{tabular}{|l|l|}
-     * 	  \hline
-     * 	  {\bf :alignParameters} & t or nil  \\ \hline
-     * 	  {\bf :alignSingleLineCaseStatements} & t or nil  \\ \hline
-     * 	  {\bf :alignSingleLineCaseStatements\_maxArrowIndent} & 1-100  \\ \hline
-     * 	  {\bf :compactStringConcatenation} & t or nil  \\ \hline
-     * 	  {\bf :doubleIndentClassDeclaration} & t or nil  \\ \hline
-     * 	  {\bf :indentLocalDefs} & t or nil  \\ \hline
-     * 	  {\bf :indentPackageBlocks} & t or nil  \\ \hline
-     * 	  {\bf :indentSpaces} & 1-10  \\ \hline
-     * 	  {\bf :indentWithTabs} & t or nil  \\ \hline
-     * 	  {\bf :multilineScaladocCommentsStartOnFirstLine} & t or nil  \\ \hline
-     * 	  {\bf :preserveDanglingCloseParenthesis} & t or nil \\ \hline
-     * 	  {\bf :preserveSpaceBeforeArguments} & t or nil  \\ \hline
-     * 	  {\bf :rewriteArrowSymbols} & t or nil  \\ \hline
-     * 	  {\bf :spaceBeforeColon} & t or nil  \\ \hline
-     * 	  {\bf :spaceInsideBrackets} & t or nil  \\ \hline
-     * 	  {\bf :spaceInsideParentheses} & t or nil  \\ \hline
-     * 	  {\bf :spacesWithinPatternBinders} & t or nil  \\ \hline
-     * 	  \end{tabular}
+     *    \vspace{1 cm}
+     *    \begin{tabular}{|l|l|}
+     *    \hline
+     *    {\bf :alignParameters} & t or nil  \\ \hline
+     *    {\bf :alignSingleLineCaseStatements} & t or nil  \\ \hline
+     *    {\bf :alignSingleLineCaseStatements\_maxArrowIndent} & 1-100  \\ \hline
+     *    {\bf :compactStringConcatenation} & t or nil  \\ \hline
+     *    {\bf :doubleIndentClassDeclaration} & t or nil  \\ \hline
+     *    {\bf :indentLocalDefs} & t or nil  \\ \hline
+     *    {\bf :indentPackageBlocks} & t or nil  \\ \hline
+     *    {\bf :indentSpaces} & 1-10  \\ \hline
+     *    {\bf :indentWithTabs} & t or nil  \\ \hline
+     *    {\bf :multilineScaladocCommentsStartOnFirstLine} & t or nil  \\ \hline
+     *    {\bf :preserveDanglingCloseParenthesis} & t or nil \\ \hline
+     *    {\bf :preserveSpaceBeforeArguments} & t or nil  \\ \hline
+     *    {\bf :rewriteArrowSymbols} & t or nil  \\ \hline
+     *    {\bf :spaceBeforeColon} & t or nil  \\ \hline
+     *    {\bf :spaceInsideBrackets} & t or nil  \\ \hline
+     *    {\bf :spaceInsideParentheses} & t or nil  \\ \hline
+     *    {\bf :spacesWithinPatternBinders} & t or nil  \\ \hline
+     *    \end{tabular}
      * Arguments:
      *   List of keyword, string pairs: preferences
      */
@@ -787,7 +787,7 @@ object ProjectConfig {
   }
 }
 
-class ReplConfig(val classpath: String) {}
+case class ReplConfig(classpath: String)
 
 class ProjectConfig(
   val name: Option[String],
@@ -810,7 +810,8 @@ class ProjectConfig(
   val extraCompilerArgs: Iterable[String],
   val extraBuilderArgs: Iterable[String],
   val javaCompilerArgs: Iterable[String],
-  val javaCompilerVersion: Option[String]) {
+  val javaCompilerVersion: Option[String])
+{
 
   val formattingPrefs = formattingPrefsMap.
     foldLeft(FormattingPreferences()) { (fp, p) =>
@@ -922,4 +923,3 @@ class ProjectConfig(
   def replConfig = new ReplConfig(replClasspath)
 
 }
-

@@ -26,73 +26,33 @@
  */
 
 package org.ensime.indexer
-import java.io.IOException
-import java.io.Reader
+
+import java.io.{File, IOException}
 import org.apache.lucene.analysis.SimpleAnalyzer
-import org.apache.lucene.analysis.ReusableAnalyzerBase
-import org.apache.lucene.analysis.LetterTokenizer
-import org.apache.lucene.analysis.TokenFilter
-import org.apache.lucene.analysis.TokenStream
-import org.apache.lucene.analysis.CharTokenizer
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
-import org.apache.lucene.document.Document
-import org.apache.lucene.document.Field
-import org.apache.lucene.index.CorruptIndexException
-import org.apache.lucene.index.FieldInvertState
-import org.apache.lucene.index.IndexReader
-import org.apache.lucene.index.IndexWriter
-import org.apache.lucene.index.IndexWriterConfig
-import org.apache.lucene.index.Term
-import org.apache.lucene.search.BooleanClause
-import org.apache.lucene.search.BooleanQuery
-import org.apache.lucene.search.DefaultSimilarity
-import org.apache.lucene.search.FuzzyQuery
-import org.apache.lucene.search.IndexSearcher
-import org.apache.lucene.search.MultiTermQuery
-import org.apache.lucene.search.PrefixQuery
-import org.apache.lucene.search.ScoringRewrite
-import org.apache.lucene.search.TermQuery
-import org.apache.lucene.search.Query
-import org.apache.lucene.search.TopScoreDocCollector
+import org.apache.lucene.document.{Document, Field}
+import org.apache.lucene.index.{CorruptIndexException, FieldInvertState, IndexReader, IndexWriter, IndexWriterConfig, Term}
+import org.apache.lucene.search.{BooleanClause, BooleanQuery, DefaultSimilarity, FuzzyQuery, IndexSearcher, MultiTermQuery, PrefixQuery, Query, ScoringRewrite, TermQuery}
 import org.apache.lucene.store.FSDirectory
-import org.apache.lucene.store.FSDirectory
-import org.apache.lucene.store.RAMDirectory
-import org.apache.lucene.queryParser.QueryParser
-import org.apache.lucene.store.NIOFSDirectory
 import org.apache.lucene.util.Version
-import org.eclipse.jdt.core.compiler.CharOperation
-import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader
-import java.io.File
-import org.ensime.config.ProjectConfig
-import org.ensime.protocol.ProtocolConversions
+import org.ensime.model.{MethodSearchResult, SymbolSearchResult, TypeInfo, TypeSearchResult}
 import org.ensime.protocol.ProtocolConst._
 import org.ensime.util._
+import org.json.simple._
+import org.objectweb.asm.Opcodes
 import scala.Char
 import scala.actors._
 import scala.actors.Actor._
-import org.ensime.model.{
-  TypeInfo,
-  SymbolSearchResult,
-  TypeSearchResult,
-  MethodSearchResult,
-  SymbolSearchResults,
-  ImportSuggestions
-}
 import scala.collection.JavaConversions
-import org.ardverk.collection._
-import io.prelink.critbit.MCritBitTree
-import scala.tools.nsc.interactive.Global
-import scala.tools.nsc.util.{ NoPosition }
+import scala.collection.mutable.{HashMap, HashSet, ListBuffer}
+import scala.tools.nsc.util.NoPosition
 import scala.util.matching.Regex
-import scala.collection.mutable.{ HashMap, HashSet, ArrayBuffer, ListBuffer }
-import org.objectweb.asm.Opcodes;
-import org.json.simple._
 
 object LuceneIndex extends StringSimilarity {
+
   val KeyIndexVersion = "indexVersion"
-  val KeyFileHashes = "fileHashes"
-  val IndexVersion: Int = 5
-  val DirName = ".ensime_lucene"
+  val KeyFileHashes   = "fileHashes"
+  val IndexVersion    = 5
+  val DirName         = ".ensime_lucene"
 
   val Similarity = new DefaultSimilarity {
     override def computeNorm(field: String, state: FieldInvertState): Float = {
@@ -100,25 +60,8 @@ object LuceneIndex extends StringSimilarity {
     }
   }
 
-  def splitTypeName(nm: String): List[String] = {
-    val keywords = new ListBuffer[String]()
-    var i = 0
-    var k = 0
-    while (i < nm.length) {
-      val c: Char = nm.charAt(i)
-      if (Character.isUpperCase(c) && i != k) {
-        keywords += nm.substring(k, i)
-        k = i
-      }
-      i += 1
-    }
-    if (i != k) {
-      keywords += nm.substring(k)
-    }
-    keywords.toList
-  }
-
   private val cache = new HashMap[(String, String), Int]
+
   def editDist(a: String, b: String): Int = {
     cache.getOrElseUpdate((a, b), getLevenshteinDistance(a, b))
   }
@@ -168,8 +111,8 @@ object LuceneIndex extends StringSimilarity {
   def shouldReindex(
     version: Int,
     onDisk: Set[(String, String)],
-    proposed: Set[(String, String)]): Boolean = {
-
+    proposed: Set[(String, String)]): Boolean =
+  {
     // Very conservative.
     // Re-index whenver the proposed set
     // contains unindexed files.
@@ -203,63 +146,49 @@ object LuceneIndex extends StringSimilarity {
   }
 
   private def buildDoc(value: SymbolSearchResult): Document = {
+
     val doc = new Document()
 
-    doc.add(new Field("tags",
-      tokenize(value.name), Field.Store.NO, Field.Index.ANALYZED))
-    doc.add(new Field("localNameTags",
-      tokenize(value.localName), Field.Store.NO, Field.Index.ANALYZED))
+    doc.add(new Field("tags", tokenize(value.name), Field.Store.NO, Field.Index.ANALYZED))
+    doc.add(new Field("localNameTags", tokenize(value.localName), Field.Store.NO, Field.Index.ANALYZED))
+    doc.add(new Field("name", value.name, Field.Store.YES, Field.Index.NOT_ANALYZED))
+    doc.add(new Field("localName", value.localName, Field.Store.YES, Field.Index.NOT_ANALYZED))
+    doc.add(new Field("type", value.declaredAs.toString, Field.Store.YES, Field.Index.NOT_ANALYZED))
 
-    doc.add(new Field("name",
-      value.name, Field.Store.YES, Field.Index.NOT_ANALYZED))
-    doc.add(new Field("localName",
-      value.localName, Field.Store.YES, Field.Index.NOT_ANALYZED))
-    doc.add(new Field("type",
-      value.declaredAs.toString, Field.Store.YES,
-      Field.Index.NOT_ANALYZED))
     value.pos match {
       case Some((file, offset)) => {
-        doc.add(new Field("file", file, Field.Store.YES,
-          Field.Index.NOT_ANALYZED))
-        doc.add(new Field("offset", offset.toString, Field.Store.YES,
-          Field.Index.NOT_ANALYZED))
+        doc.add(new Field("file", file, Field.Store.YES, Field.Index.NOT_ANALYZED))
+        doc.add(new Field("offset", offset.toString, Field.Store.YES, Field.Index.NOT_ANALYZED))
       }
       case None => {
-        doc.add(new Field("file", "", Field.Store.YES,
-          Field.Index.NOT_ANALYZED))
-        doc.add(new Field("offset", "", Field.Store.YES,
-          Field.Index.NOT_ANALYZED))
+        doc.add(new Field("file", "", Field.Store.YES, Field.Index.NOT_ANALYZED))
+        doc.add(new Field("offset", "", Field.Store.YES, Field.Index.NOT_ANALYZED))
       }
     }
     value match {
       case value: TypeSearchResult => {
-        doc.add(new Field("docType",
-          "type", Field.Store.NO,
-          Field.Index.ANALYZED))
+        doc.add(new Field("docType", "type", Field.Store.NO, Field.Index.ANALYZED))
       }
       case value: MethodSearchResult => {
-        doc.add(new Field("owner",
-          value.owner, Field.Store.YES,
-          Field.Index.NOT_ANALYZED))
-        doc.add(new Field("docType",
-          "method", Field.Store.NO,
-          Field.Index.ANALYZED))
+        doc.add(new Field("owner", value.owner, Field.Store.YES, Field.Index.NOT_ANALYZED))
+        doc.add(new Field("docType", "method", Field.Store.NO, Field.Index.ANALYZED))
       }
     }
     doc
   }
 
   private def buildSym(d: Document): SymbolSearchResult = {
-    val name = d.get("name")
+    val name      = d.get("name")
     val localName = d.get("localName")
-    val tpe = scala.Symbol(d.get("type"))
-    val file = d.get("file")
-    val offset = d.get("offset")
+    val tpe       = scala.Symbol(d.get("type"))
+    val file      = d.get("file")
+    val offset    = d.get("offset")
     val pos = (file, offset) match {
-      case (file:String, "") => Some((file, 0))
-      case (file:String, offset:String) => Some((file, offset.toInt))
+      case (file: String, "") => Some((file, 0))
+      case (file: String, offset: String) => Some((file, offset.toInt))
       case _ => None
     }
+
     val owner = Option(d.get("owner"))
     owner match {
       case Some(owner) => {
@@ -291,25 +220,25 @@ object LuceneIndex extends StringSimilarity {
     writer: IndexWriter,
     files: Iterable[File],
     includes: Iterable[Regex],
-    excludes: Iterable[Regex]) {
+    excludes: Iterable[Regex])
+  {
     val t = System.currentTimeMillis()
 
     sealed abstract trait IndexEvent
-    case class ClassEvent(name: String,
-      location: String, flags: Int) extends IndexEvent
-    case class MethodEvent(className: String, name: String,
-      location: String, flags: Int) extends IndexEvent
+    case class ClassEvent(name: String, location: String, flags: Int) extends IndexEvent
+    case class MethodEvent(className: String, name: String, location: String, flags: Int) extends IndexEvent
     case object StopEvent extends IndexEvent
 
     /**
-     * Implement a producer, consumer model for creation of the static index.
-     * We fill the IndexWorkQueue's mailbox as quickly as possibly, reading
-     * classes off the disk (see use of ClassIterator below). IndexWorkQueue
-     * drains the mailbox as fast as it can write to the search index.
+     * Implement a producer, consumer model for creation of the static
+     * index.  We fill the IndexWorkQueue's mailbox as quickly as
+     * possibly, reading classes off the disk (see use of
+     * ClassIterator below). IndexWorkQueue drains the mailbox as fast
+     * as it can write to the search index.
      *
-     * The idea is to allow the reading of class information to proceed at
-     * full speed, spooling work to the mailbox, while the index writing
-     * slowly catches up.
+     * The idea is to allow the reading of class information to
+     * proceed at full speed, spooling work to the mailbox, while the
+     * index writing slowly catches up.
      */
     class IndexWorkQueue extends Actor {
       def act() {
@@ -325,8 +254,7 @@ object LuceneIndex extends StringSimilarity {
               val doc = buildDoc(value)
               writer.addDocument(doc)
             }
-            case MethodEvent(className: String, name: String,
-              location: String, flags: Int) => {
+            case MethodEvent(className: String, name: String, location: String, flags: Int) => {
               val isStatic = ((flags & Opcodes.ACC_STATIC) != 0)
               val revisedClassName = if (isStatic) className + "$"
               else className
@@ -347,24 +275,26 @@ object LuceneIndex extends StringSimilarity {
         }
       }
     }
+
     val indexWorkQ = new IndexWorkQueue
     indexWorkQ.start
 
     val handler = new ClassHandler {
-      var classCount = 0
+
+      var classCount  = 0
       var methodCount = 0
-      var validClass = false
+      var validClass  = false
+
       override def onClass(name: String, location: String, flags: Int) {
         val isPublic = ((flags & Opcodes.ACC_PUBLIC) != 0)
-        validClass = (isPublic && isValidType(name) && include(name,
-          includes, excludes))
+        validClass = (isPublic && isValidType(name) && include(name, includes, excludes))
         if (validClass) {
           indexWorkQ ! ClassEvent(name, location, flags)
           classCount += 1
         }
       }
-      override def onMethod(className: String, name: String,
-        location: String, flags: Int) {
+
+      override def onMethod(className: String, name: String, location: String, flags: Int) {
         val isPublic = ((flags & Opcodes.ACC_PUBLIC) != 0)
         if (validClass && isPublic && isValidMethod(name)) {
           indexWorkQ ! MethodEvent(className, name, location, flags)
@@ -378,8 +308,7 @@ object LuceneIndex extends StringSimilarity {
     indexWorkQ !? StopEvent
     val elapsed = System.currentTimeMillis() - t
     println("Indexing completed in " + elapsed / 1000.0 + " seconds.")
-    println("Indexed " + handler.classCount + " classes with " +
-      handler.methodCount + " methods.")
+    println("Indexed " + handler.classCount + " classes with " + handler.methodCount + " methods.")
   }
 
 }
@@ -389,8 +318,7 @@ trait LuceneIndex {
   import LuceneIndex._
 
   private val analyzer = new SimpleAnalyzer(Version.LUCENE_35)
-  private val config: IndexWriterConfig = new IndexWriterConfig(
-    Version.LUCENE_35, analyzer)
+  private val config: IndexWriterConfig = new IndexWriterConfig(Version.LUCENE_35, analyzer)
   config.setSimilarity(Similarity)
   private var index: FSDirectory = null
   private var indexWriter: Option[IndexWriter] = None
@@ -400,7 +328,8 @@ trait LuceneIndex {
     root: File,
     files: Set[File],
     includes: Iterable[Regex],
-    excludes: Iterable[Regex]): Unit = {
+    excludes: Iterable[Regex]): Unit =
+  {
 
     val dir: File = new File(root, DirName)
 
@@ -431,8 +360,7 @@ trait LuceneIndex {
       if (shouldReindex(version, indexedFiles.toSet, hashed)) {
         println("Re-indexing...")
         buildStaticIndex(writer, files, includes, excludes)
-        val json = JSONValue.toJSONString(
-          JavaConversions.mapAsJavaMap(hashed.toMap))
+        val json = JSONValue.toJSONString(JavaConversions.mapAsJavaMap(hashed.toMap))
         val userData = Map[String, String](
           (KeyIndexVersion, IndexVersion.toString),
           (KeyFileHashes, json))
@@ -454,14 +382,15 @@ trait LuceneIndex {
     results.toList
   }
 
-  def getImportSuggestions(typeNames: Iterable[String],
-    maxResults: Int = 0): List[List[SymbolSearchResult]] = {
+  def getImportSuggestions(typeNames: Iterable[String], maxResults: Int = 0): List[List[SymbolSearchResult]] = {
+
     def suggestions(typeName: String): List[SymbolSearchResult] = {
-      val keywords = typeName::splitTypeName(typeName)
+
+      val keywords   = typeName :: splitTypeName(typeName)
       val candidates = new HashSet[SymbolSearchResult]
 
       search(keywords,
-	maxResults, true, true,
+        maxResults, true, true,
         (r: SymbolSearchResult) =>
         r match {
           case r: TypeSearchResult => candidates += r
@@ -528,30 +457,29 @@ trait LuceneIndex {
     maxResults: Int,
     restrictToTypes: Boolean,
     fuzzy: Boolean,
-    receiver: (SymbolSearchResult => Unit)): Unit = {
+    receiver: (SymbolSearchResult => Unit)): Unit =
+  {
 
     val preparedKeys = keys.filter(!_.isEmpty).map(_.toLowerCase)
     val field = if (restrictToTypes) "localNameTags" else "tags"
 
     val bq = new BooleanQuery()
     if (restrictToTypes) {
-      bq.add(new TermQuery(new Term("docType", "type")),
-        BooleanClause.Occur.MUST)
+      bq.add(new TermQuery(new Term("docType", "type")), BooleanClause.Occur.MUST)
     }
+
     for (key <- preparedKeys) {
       val term = new Term(field, key)
       val pq = if (fuzzy) new FuzzyQuery(term, 0.6F) else new PrefixQuery(term)
+
       /* Must force scoring, otherwise prefix queries use a constant
       score which ignores field length normalization, etc.
       http://stackoverflow.com/questions/3060636/lucene-question-of-score-caculation-with-prefixquery */
       pq.setRewriteMethod(ScoringRewrite.SCORING_BOOLEAN_QUERY_REWRITE)
+
       import BooleanClause._
       val operator = if (fuzzy) Occur.SHOULD else Occur.MUST
       bq.add(pq, operator)
-
-      // val boostExacts = new TermQuery(term)
-      // boostExacts.setBoost(2)
-      // bq.add(boostExacts, Occur.SHOULD)
     }
     searchByQuery(bq, maxResults, receiver)
   }
@@ -559,7 +487,8 @@ trait LuceneIndex {
   private def searchByQuery(
     q: Query,
     maxResults: Int,
-    receiver: (SymbolSearchResult => Unit)): Unit = {
+    receiver: (SymbolSearchResult => Unit)): Unit =
+  {
     if (indexReader.isEmpty) {
       indexReader = Some(IndexReader.open(index))
     }

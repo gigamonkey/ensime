@@ -43,8 +43,8 @@ object SwankProtocol extends SwankProtocol {}
 trait SwankProtocol extends Protocol {
 
   class ConnectionInfo {
-    val pid = None
-    val serverName: String = "ENSIME-ReferenceServer"
+    val pid                     = None
+    val serverName: String      = "ENSIME-ReferenceServer"
     val protocolVersion: String = "0.8.6"
   }
 
@@ -93,7 +93,6 @@ trait SwankProtocol extends Protocol {
    */
 
 
-  import SwankProtocol._
   import ProtocolConst._
 
   private var outPeer: Actor = null;
@@ -108,10 +107,10 @@ trait SwankProtocol extends Protocol {
   // Handle reading / writing of messages
 
   def writeMessage(value: WireFormat, out: OutputStream) {
-    val dataString: String = value.toWireString
-    val data: Array[Byte] = dataString.getBytes("UTF-8")
-    val header: Array[Byte] = String.format(
-      "%06x", int2Integer(data.length)).getBytes("UTF-8")
+    val dataString = value.toWireString
+    val data       = dataString.getBytes("UTF-8")
+    val header     = String.format("%06x", int2Integer(data.length)).getBytes("UTF-8")
+
     println("Writing: " + dataString)
     out.write(header)
     out.write(data)
@@ -134,13 +133,13 @@ trait SwankProtocol extends Protocol {
 
   private val headerBuf = new Array[Char](6);
 
-  def readMessage(in: java.io.InputStream): WireFormat = {
+  def readMessage(in: InputStream): WireFormat = {
     val reader = new InputStreamReader(in, "UTF-8")
     fillArray(reader, headerBuf)
     val msglen = Integer.valueOf(new String(headerBuf), 16).intValue()
     if (msglen > 0) {
       //TODO allocating a new array each time is inefficient!
-      val buf: Array[Char] = new Array[Char](msglen)
+      val buf = new Array[Char](msglen)
       fillArray(reader, buf)
       SExp.read(new input.CharArrayReader(buf))
     } else {
@@ -855,7 +854,7 @@ trait SwankProtocol extends Protocol {
       case "swank:typecheck-files" => {
         form match {
           case SExpList(head :: SExpList(strings) :: body) => {
-	    val filenames = strings.collect{case StringAtom(s) => s}.toList
+            val filenames = strings.collect{case StringAtom(s) => s}.toList
             rpcTarget.rpcTypecheckFiles(filenames, callId)
           }
           case _ => oops
@@ -2075,31 +2074,31 @@ trait SwankProtocol extends Protocol {
     def unapply(sexp: SExpList): Option[DebugLocation] = {
       val m = sexp.toKeywordMap()
       m.get(key(":type")).flatMap {
-	case SymbolAtom("reference") => {
-	  for(StringAtom(id) <- m.get(key(":object-id"))) yield {
-	    DebugObjectReference(id.toLong)
-	  }
-	}
-	case SymbolAtom("field") => {
-	  for(StringAtom(id) <- m.get(key(":object-id"));
-	    StringAtom(field) <- m.get(key(":field"))) yield {
-	    DebugObjectField(id.toLong, field)
-	  }
-	}
-	case SymbolAtom("element") => {
-	  for(StringAtom(id) <- m.get(key(":object-id"));
-	    IntAtom(index) <- m.get(key(":index"))) yield {
-	    DebugArrayElement(id.toLong, index)
-	  }
-	}
-	case SymbolAtom("slot") => {
-	  for(StringAtom(id) <- m.get(key(":thread-id"));
-	    IntAtom(frame) <- m.get(key(":frame"));
-	    IntAtom(offset) <- m.get(key(":offset"))) yield {
-	    DebugStackSlot(id.toLong, frame, offset)
-	  }
-	}
-	case _ => None
+        case SymbolAtom("reference") => {
+          for(StringAtom(id) <- m.get(key(":object-id"))) yield {
+            DebugObjectReference(id.toLong)
+          }
+        }
+        case SymbolAtom("field") => {
+          for(StringAtom(id) <- m.get(key(":object-id"));
+            StringAtom(field) <- m.get(key(":field"))) yield {
+            DebugObjectField(id.toLong, field)
+          }
+        }
+        case SymbolAtom("element") => {
+          for(StringAtom(id) <- m.get(key(":object-id"));
+            IntAtom(index) <- m.get(key(":index"))) yield {
+            DebugArrayElement(id.toLong, index)
+          }
+        }
+        case SymbolAtom("slot") => {
+          for(StringAtom(id) <- m.get(key(":thread-id"));
+            IntAtom(frame) <- m.get(key(":frame"));
+            IntAtom(offset) <- m.get(key(":offset"))) yield {
+            DebugStackSlot(id.toLong, frame, offset)
+          }
+        }
+        case _ => None
       }
     }
   }

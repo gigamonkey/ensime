@@ -171,10 +171,10 @@ trait RefactoringControl { self: RichCompilerControl with RefactoringImpl =>
     askOption(execRefactor(procId, tpe, effect)).getOrElse(
       Left(RefactorFailure(procId, "Refactor exec call failed."))) match {
       case Right(result) => {
-	// Reload all files touched by refactoring, so subsequent refactorings
-	// will see consistent state.
-	askReloadFiles(result.touched.map(f => createSourceFile(f.getPath)))
-	Right(result)
+        // Reload all files touched by refactoring, so subsequent refactorings
+        // will see consistent state.
+        askReloadFiles(result.touched.map(f => createSourceFile(f.getPath)))
+        Right(result)
       }
       case Left(failure) => Left(failure)
     }
@@ -332,8 +332,8 @@ trait RefactoringImpl { self: RichPresentationCompiler =>
       }
     } catch {
       case e : Throwable => {
-	e.printStackTrace()
-	Left(RefactorFailure(procId, e.toString))
+        e.printStackTrace()
+        Left(RefactorFailure(procId, e.toString))
       }
     }
   }
@@ -356,4 +356,3 @@ trait RefactoringImpl { self: RichPresentationCompiler =>
   }
 
 }
-

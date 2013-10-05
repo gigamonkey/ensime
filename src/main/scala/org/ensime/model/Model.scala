@@ -26,14 +26,14 @@
  */
 
 package org.ensime.model
+
 import java.io.File
-import scala.collection.mutable.{ HashMap, ArrayBuffer }
-import scala.tools.nsc.interactive.{ Global, CompilerControl }
-import scala.tools.nsc.util.{ NoPosition, Position }
-import scala.tools.nsc.io.{ AbstractFile }
+import org.ensime.server.{RichPresentationCompiler, SourceFileCandidatesReq}
 import org.ensime.util.CanonFile
-import org.ensime.server.RichPresentationCompiler
-import org.ensime.server.SourceFileCandidatesReq
+import scala.collection.mutable.{ArrayBuffer, HashMap}
+import scala.tools.nsc.interactive.CompilerControl
+import scala.tools.nsc.io.AbstractFile
+import scala.tools.nsc.util.{NoPosition, Position}
 
 abstract class EntityInfo(val name: String, val members: Iterable[EntityInfo]) {}
 
@@ -51,152 +51,63 @@ trait SymbolSearchResult {
   val pos: Option[(String, Int)]
 }
 
-case class TypeSearchResult(
-  val name: String,
-  val localName: String,
-  val declaredAs: scala.Symbol,
-  val pos: Option[(String, Int)]) extends SymbolSearchResult
-
-case class MethodSearchResult(
-  val name: String,
-  val localName: String,
-  val declaredAs: scala.Symbol,
-  val pos: Option[(String, Int)],
-  val owner: String) extends SymbolSearchResult
+case class TypeSearchResult(name: String, localName: String, declaredAs: scala.Symbol, pos: Option[(String, Int)]) extends SymbolSearchResult
+case class MethodSearchResult(name: String, localName: String, declaredAs: scala.Symbol, pos: Option[(String, Int)], owner: String) extends SymbolSearchResult
 
 case class ImportSuggestions(symLists: Iterable[Iterable[SymbolSearchResult]])
 case class SymbolSearchResults(syms: Iterable[SymbolSearchResult])
+case class SymbolDesignations(file: String, syms: List[SymbolDesignation])
 
-case class SymbolDesignations(
-  val file: String,
-  val syms: List[SymbolDesignation])
+case class SymbolDesignation(start: Int, end: Int, symType: scala.Symbol)
+case class SymbolInfo(name: String, localName: String, declPos: Position, tpe: TypeInfo, isCallable: Boolean, ownerTypeId: Option[Int])
 
-case class SymbolDesignation(
-  val start: Int,
-  val end: Int,
-  val symType: scala.Symbol)
+case class CompletionSignature(sections: List[List[(String, String)]], result: String)
+case class CompletionInfo(name: String, tpeSig: CompletionSignature, tpeId: Int, isCallable: Boolean, relevance: Int, toInsert: Option[String])
+case class CompletionInfoList(prefix: String, completions: List[CompletionInfo])
 
-class SymbolInfo(
-  val name: String,
-  val localName: String,
-  val declPos: Position,
-  val tpe: TypeInfo,
-  val isCallable: Boolean,
-  val ownerTypeId: Option[Int]) {}
-
-case class CompletionSignature(
-  val sections: List[List[(String, String)]],
-  val result: String) {}
-
-case class CompletionInfo(
-  val name: String,
-  val tpeSig: CompletionSignature,
-  val tpeId: Int,
-  val isCallable: Boolean,
-  val relevance: Int,
-  val toInsert: Option[String]) {}
-
-case class CompletionInfoList(
-  val prefix: String,
-  val completions: List[CompletionInfo]) {}
-
-trait PatchOp {
+sealed trait PatchOp {
   val start: Int
 }
 
-case class PatchInsert(
-  val start: Int,
-  val text: String) extends PatchOp
-
-case class PatchDelete(
-  val start: Int,
-  val end: Int) extends PatchOp
-
-case class PatchReplace(
-  val start: Int,
-  val end: Int,
-  val text: String) extends PatchOp
+case class PatchInsert(start: Int, text: String) extends PatchOp
+case class PatchDelete(start: Int, end: Int) extends PatchOp
+case class PatchReplace(start: Int, end: Int, text: String) extends PatchOp
 
 case class Breakpoint(pos: SourcePosition)
-case class BreakpointList(val active: List[Breakpoint], val pending: List[Breakpoint])
+case class BreakpointList(active: List[Breakpoint], pending: List[Breakpoint])
 
 case class OffsetRange(from: Int, to: Int)
 
 sealed trait DebugLocation {}
 
-case class DebugObjectReference(
-  val objectId: Long) extends DebugLocation
+case class DebugObjectReference(objectId: Long) extends DebugLocation
 
-case class DebugStackSlot(
-  val threadId: Long, val frame: Int, val offset: Int) extends DebugLocation
+case class DebugStackSlot(threadId: Long, frame: Int, offset: Int) extends DebugLocation
 
-case class DebugArrayElement(
-  val objectId: Long, val index: Int) extends DebugLocation
+case class DebugArrayElement(objectId: Long, index: Int) extends DebugLocation
 
-case class DebugObjectField(
-  val objectId: Long, val name: String) extends DebugLocation
+case class DebugObjectField(objectId: Long, name: String) extends DebugLocation
 
 
 sealed trait DebugValue {
   def typeName: String;
 }
 
-case class DebugNullValue(
-  val typeName: String) extends DebugValue
+case class DebugNullValue(typeName: String) extends DebugValue
+case class DebugPrimitiveValue(summary: String, typeName: String) extends DebugValue
+case class DebugClassField(index: Int, name: String, typeName: String, summary: String)
+case class DebugObjectInstance(summary: String, fields: List[DebugClassField], typeName: String, objectId: Long) extends DebugValue
+case class DebugStringInstance(summary: String, fields: List[DebugClassField], typeName: String, objectId: Long) extends DebugValue
+case class DebugArrayInstance(length: Int, typeName: String, elementTypeName: String, objectId: Long) extends DebugValue
 
-case class DebugPrimitiveValue(
-  val summary: String,
-  val typeName: String) extends DebugValue
-
-case class DebugClassField(
-  val index: Int,
-  val name: String,
-  val typeName: String,
-  val summary: String)
-
-case class DebugObjectInstance(
-  val summary: String,
-  val fields: List[DebugClassField],
-  val typeName: String,
-  val objectId: Long) extends DebugValue
-
-case class DebugStringInstance(
-  val summary: String,
-  val fields: List[DebugClassField],
-  val typeName: String,
-  val objectId: Long) extends DebugValue
-
-case class DebugArrayInstance(
-  val length: Int,
-  val typeName: String,
-  val elementTypeName: String,
-  val objectId: Long) extends DebugValue
-
-case class DebugStackLocal(
-  val index: Int,
-  val name: String,
-  val typeName: String,
-  val summary: String)
-
-case class DebugStackFrame(
-  val index: Int,
-  val locals: List[DebugStackLocal],
-  val numArguments: Int,
-  val className: String,
-  val methodName: String,
-  val pcLocation: SourcePosition,
-  val thisObjectId: Long)
-
-case class DebugBacktrace(
-  val frames: List[DebugStackFrame],
-  val threadId: Long,
-  val threadName: String)
+case class DebugStackLocal(index: Int, name: String, typeName: String, summary: String)
+case class DebugStackFrame(index: Int, locals: List[DebugStackLocal], numArguments: Int, className: String, methodName: String, pcLocation: SourcePosition, thisObjectId: Long)
+case class DebugBacktrace(frames: List[DebugStackFrame], threadId: Long, threadName: String)
 
 class NamedTypeMemberInfo(override val name: String, val tpe: TypeInfo, val pos: Position, val declaredAs: scala.Symbol) extends EntityInfo(name, List()) {}
-
 class NamedTypeMemberInfoLight(override val name: String, val tpeSig: String, val tpeId: Int, val isCallable: Boolean) extends EntityInfo(name, List()) {}
 
-class PackageMemberInfoLight(val name: String) {}
+case class PackageMemberInfoLight(name: String)
 
 class TypeInfo(
   name: String,
@@ -214,33 +125,31 @@ class ArrowTypeInfo(
   val resultType: TypeInfo,
   val paramSections: Iterable[ParamSectionInfo]) extends TypeInfo(name, id, 'nil, name, List(), List(), NoPosition, None) {}
 
-class CallCompletionInfo(
-  val resultType: TypeInfo,
-  val paramSections: Iterable[ParamSectionInfo]) {}
+case class CallCompletionInfo(resultType: TypeInfo, paramSections: Iterable[ParamSectionInfo])
 
-class ParamSectionInfo(
-  val params: Iterable[(String, TypeInfo)],
-  val isImplicit: Boolean)
+case class ParamSectionInfo(params: Iterable[(String, TypeInfo)], isImplicit: Boolean)
 
-class InterfaceInfo(val tpe: TypeInfo, val viaView: Option[String]) {}
+case class InterfaceInfo(tpe: TypeInfo, viaView: Option[String])
 
-class TypeInspectInfo(val tpe: TypeInfo, val companionId: Option[Int], val supers: Iterable[InterfaceInfo]) {}
+case class TypeInspectInfo(tpe: TypeInfo, companionId: Option[Int], supers: Iterable[InterfaceInfo])
 
 trait ModelBuilders { self: RichPresentationCompiler =>
 
   import self._
   import definitions.{ ObjectClass, RootPackage, EmptyPackage, NothingClass, AnyClass, AnyRefClass }
 
-  private val typeCache = new HashMap[Int, Type]
+  private val typeCache        = new HashMap[Int, Type]
   private val typeCacheReverse = new HashMap[Type, Int]
 
   def clearTypeCache() {
     typeCache.clear
     typeCacheReverse.clear
   }
+
   def typeById(id: Int): Option[Type] = {
     typeCache.get(id)
   }
+
   def cacheType(tpe: Type): Int = {
     if (typeCacheReverse.contains(tpe)) {
       typeCacheReverse(tpe)
@@ -262,7 +171,7 @@ trait ModelBuilders { self: RichPresentationCompiler =>
       indexer !? (1000, SourceFileCandidatesReq(pack, name)) match {
         case Some(files: Set[File]) => {
           files.flatMap { f =>
-	    println("Linking:" + (sym, f))
+            println("Linking:" + (sym, f))
             askLinkPos(sym, f.getAbsolutePath)
           }.filter(_.isDefined).headOption.getOrElse(NoPosition)
         }
@@ -557,6 +466,4 @@ trait ModelBuilders { self: RichPresentationCompiler =>
       new TypeInspectInfo(TypeInfo.nullInfo, None, List())
     }
   }
-
 }
-

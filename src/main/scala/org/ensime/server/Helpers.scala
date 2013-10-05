@@ -1,7 +1,7 @@
 /**
 *  Copyright (c) 2010, Aemon Cannon
 *  All rights reserved.
-*  
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions are met:
 *      * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
 *      * Neither the name of ENSIME nor the
 *        names of its contributors may be used to endorse or promote products
 *        derived from this software without specific prior written permission.
-*  
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -82,8 +82,8 @@ trait Helpers { self: Global =>
     if (isArrowType(tpe)) {
       CompletionSignature(tpe.paramss.map { sect =>
           sect.map { p => (p.name.toString, typeShortNameWithArgs(p.tpe)) }
-	},
-	typeShortNameWithArgs(tpe.finalResultType))
+        },
+        typeShortNameWithArgs(tpe.finalResultType))
     } else CompletionSignature(List(), resultTypeName(tpe))
   }
 
@@ -100,7 +100,7 @@ trait Helpers { self: Global =>
           "(" +
           sect.map { p => typeShortNameWithArgs(p.tpe) }.mkString(", ") +
           ")"
-	}.mkString(" => ")
+        }.mkString(" => ")
         + " => " +
         typeShortNameWithArgs(tpe.finalResultType))
     } else resultTypeName(tpe)
@@ -250,7 +250,7 @@ trait Helpers { self: Global =>
     else S.Nil
   }
 
-  def symbolSummary(sym: Symbol): Map[String, Any] = {
+  private def symbolSummary(sym: Symbol): Map[String, Any] = {
     import scala.tools.nsc.symtab.Flags._
     Map(
       "name" -> sym.toString(),

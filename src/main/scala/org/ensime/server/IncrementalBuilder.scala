@@ -1,7 +1,7 @@
 /**
 *  Copyright (c) 2010, Aemon Cannon
 *  All rights reserved.
-*  
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions are met:
 *      * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
 *      * Neither the name of ENSIME nor the
 *        names of its contributors may be used to endorse or promote products
 *        derived from this software without specific prior written permission.
-*  
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -54,10 +54,9 @@ case class UpdateSourceFilesReq(files: Iterable[File])
 
 class IncrementalBuilder(project: Project, protocol: ProtocolConversions, config: ProjectConfig) extends Actor {
 
-  class IncrementalBuildManager(settings: Settings, reporter: Reporter)
-  extends RefinedBuildManager(settings) {
-    class IncrementalGlobal(settings: Settings, reporter: Reporter)
-    extends scala.tools.nsc.Global(settings, reporter) {
+  class IncrementalBuildManager(settings: Settings, reporter: Reporter) extends RefinedBuildManager(settings) {
+
+    class IncrementalGlobal(settings: Settings, reporter: Reporter) extends scala.tools.nsc.Global(settings, reporter) {
       override def computeInternalPhases() {
         super.computeInternalPhases
         phasesSet += dependencyAnalysis
@@ -73,13 +72,13 @@ class IncrementalBuilder(project: Project, protocol: ProtocolConversions, config
   settings.processArguments(config.builderArgs, false)
   private val reporter = new PresentationReporter(new ReportHandler{
       override def messageUser(str:String){
-	project ! AsyncEvent(toWF(
-	  SendBackgroundMessageEvent(MsgCompilerUnexpectedError, Some(str))))
+        project ! AsyncEvent(toWF(
+          SendBackgroundMessageEvent(MsgCompilerUnexpectedError, Some(str))))
       }
     })
   private val bm: BuildManager = new IncrementalBuildManager(settings, reporter)
 
-  import bm._
+  //import bm._
 
   def act() {
 
@@ -95,12 +94,11 @@ class IncrementalBuilder(project: Project, protocol: ProtocolConversions, config
 
                 case RebuildAllReq() => {
                   project ! AsyncEvent(toWF(SendBackgroundMessageEvent(
-		    MsgBuildingEntireProject, Some("Building entire project. Please wait..."))))
+                    MsgBuildingEntireProject, Some("Building entire project. Please wait..."))))
                   val files = config.sourceFilenames.map(s => AbstractFile.getFile(s))
                   reporter.reset
                   bm.addSourceFiles(files)
-                  project ! AsyncEvent(toWF(SendBackgroundMessageEvent(
-		    MsgBuildComplete, Some("Build complete."))))
+                  project ! AsyncEvent(toWF(SendBackgroundMessageEvent(MsgBuildComplete, Some("Build complete."))))
                   val result = toWF(reporter.allNotes.map(toWF))
                   project ! RPCResultEvent(result, callId)
                 }
@@ -135,8 +133,8 @@ class IncrementalBuilder(project: Project, protocol: ProtocolConversions, config
                   e.getStackTraceString)
 
                 project.sendRPCError(ErrExceptionInBuilder,
-		  Some("Error occurred in incremental builder. Check the server log."), 
-		  callId)
+                  Some("Error occurred in incremental builder. Check the server log."),
+                  callId)
               }
             }
           }
@@ -160,4 +158,3 @@ class IncrementalBuilder(project: Project, protocol: ProtocolConversions, config
   }
 
 }
-

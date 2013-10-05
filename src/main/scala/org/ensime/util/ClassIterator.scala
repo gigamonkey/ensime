@@ -52,12 +52,14 @@ private class PublicSymbolVisitor(location: File, handler: ClassHandler) extends
   var currentClassName: Option[String] = None
   val path: String = location.getPath()
 
-  override def visit(version: Int,
+  override def visit(
+    version: Int,
     access: Int,
     name: String,
     signature: String,
     superName: String,
-    interfaces: Array[String]) {
+    interfaces: Array[String])
+  {
     val nm = mapClassName(name)
     currentClassName = Some(nm)
     handler.onClass(nm, path, access)
@@ -125,8 +127,8 @@ object ClassIterator {
   */
   def findPublicSymbols(path: Iterable[File], handler: ClassHandler) {
     find(path, { (location, cr) =>
-	val visitor = new PublicSymbolVisitor(new File(location.file), handler)
-	cr.accept(visitor, ClassReader.SKIP_CODE)
+        val visitor = new PublicSymbolVisitor(new File(location.file), handler)
+        cr.accept(visitor, ClassReader.SKIP_CODE)
       })
   }
 
@@ -206,7 +208,7 @@ object ClassIterator {
           val is = new BufferedInputStream(
             zipFile.getInputStream(e))
           processClassData(is, ClassLocation(file.getCanonicalPath.replace("\\", "/"), e.getName),
-	    callback)
+            callback)
         } finally {
           if (is != null) is.close()
         }
@@ -223,11 +225,19 @@ object ClassIterator {
   private def isClass(e: FileEntry): Boolean =
     (!e.isDirectory) && (e.getName.toLowerCase.endsWith(".class"))
 
+
   private def processDirectory(dir: File, callback: Callback) {
     import FileUtils._
+
+    /* Better.
+    dir.andTree
+      .filter { isClass(_) }
+      .foreach { f => processClassfile(f, callback) }
+     */
+
     for (f <- dir.andTree) {
       if (isClass(f)) {
-	processClassfile(f, callback)
+        processClassfile(f, callback)
       }
     }
   }

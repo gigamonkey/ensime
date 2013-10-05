@@ -32,9 +32,7 @@ import org.ensime.config.ProjectConfig
 import org.ensime.indexer.ClassFileIndex
 import org.ensime.indexer.LuceneIndex
 import org.objectweb.asm.ClassReader
-import org.ensime.model.{
-  ImportSuggestions, MethodSearchResult, SymbolSearchResult,
-  SymbolSearchResults, TypeInfo, TypeSearchResult}
+import org.ensime.model.{ImportSuggestions, MethodSearchResult, SymbolSearchResult, SymbolSearchResults, TypeInfo, TypeSearchResult}
 import org.ensime.protocol.ProtocolConst._
 import org.ensime.protocol.ProtocolConversions
 import org.ensime.util._
@@ -45,8 +43,7 @@ import scala.collection.mutable.{ArrayBuffer, HashSet, ListBuffer}
 case class IndexerShutdownReq()
 case class RebuildStaticIndexReq()
 case class TypeCompletionsReq(prefix: String, maxResults: Int)
-case class SourceFileCandidatesReq(enclosingPackage: String,
-  classNamePrefix: String)
+case class SourceFileCandidatesReq(enclosingPackage: String, classNamePrefix: String)
 case class AddSymbolsReq(syms: Iterable[SymbolSearchResult])
 case class RemoveSymbolsReq(syms: Iterable[String])
 case class ReindexClassFilesReq(files: Iterable[File])
@@ -58,11 +55,12 @@ case class CommitReq()
 class Indexer(
   project: Project,
   protocol: ProtocolConversions,
-  config: ProjectConfig) extends Actor {
+  config: ProjectConfig) extends Actor
+{
 
   import protocol._
 
-  val index = new LuceneIndex{}
+  val index = new LuceneIndex {}
   val classFileIndex = new ClassFileIndex(config)
 
   def act() {
@@ -79,15 +77,15 @@ class Indexer(
               config.allFilesOnClasspath,
               config.onlyIncludeInIndex,
               config.excludeFromIndex)
-	    classFileIndex.indexFiles(
-	      config.allFilesOnClasspath
-	      ++ List(config.target, config.testTarget).flatten
-	    )
-	    project ! AsyncEvent(toWF(IndexerReadyEvent()))
+            classFileIndex.indexFiles(
+              config.allFilesOnClasspath
+              ++ List(config.target, config.testTarget).flatten
+            )
+            project ! AsyncEvent(toWF(IndexerReadyEvent()))
           }
           case ReindexClassFilesReq(files: Iterable[File]) => {
-	    classFileIndex.indexFiles(files)
-	  }
+            classFileIndex.indexFiles(files)
+          }
           case CommitReq() => {
             index.commit()
           }
@@ -101,12 +99,12 @@ class Indexer(
           }
           case TypeCompletionsReq(prefix: String, maxResults: Int) => {
             val suggestions = index.keywordSearch(List(prefix), maxResults, true)
-	    sender ! suggestions
+            sender ! suggestions
           }
           case SourceFileCandidatesReq(enclosingPackage, classNamePrefix) => {
-	    sender ! classFileIndex.sourceFileCandidates(
-	      enclosingPackage,
-	      classNamePrefix)
+            sender ! classFileIndex.sourceFileCandidates(
+              enclosingPackage,
+              classNamePrefix)
           }
           case RPCRequestEvent(req: Any, callId: Int) => {
             try {
@@ -125,13 +123,13 @@ class Indexer(
                   project ! RPCResultEvent(toWF(suggestions), callId)
                 }
                 case MethodBytecodeReq(sourceName: String, line: Int) => {
-		  classFileIndex.locateBytecode(sourceName, line) match{
-		    case method :: rest =>
-		      project ! RPCResultEvent(
-		      toWF(method), callId)
-		    case _ => project.sendRPCError(ErrExceptionInIndexer,
+                  classFileIndex.locateBytecode(sourceName, line) match{
+                    case method :: rest =>
+                      project ! RPCResultEvent(
+                      toWF(method), callId)
+                    case _ => project.sendRPCError(ErrExceptionInIndexer,
                       Some("Failed to find method bytecode"), callId)
-		  }
+                  }
                 }
               }
             } catch {
@@ -179,13 +177,40 @@ object Indexer {
   }
 }
 
-
-
 /**
  * Helper mixin for interfacing compiler (Symbols)
  * with the indexer.
  */
 trait IndexerInterface { self: RichPresentationCompiler =>
+
+  def indexTopLevelSyms(syms: Iterable[Symbol]) {
+    val infos = new ArrayBuffer[SymbolSearchResult]
+    for (sym <- syms) {
+      if (Indexer.isValidType(typeSymName(sym))) {
+        val key = lookupKey(sym)
+        infos += sym
+        for (mem <- try { sym.tpe.members } catch { case e => { List() } }) {
+          if (Indexer.isValidMethod(mem.nameString)) {
+            val key = lookupKey(mem)
+            infos += mem
+          }
+        }
+      }
+    }
+    indexer ! AddSymbolsReq(infos)
+  }
+
+  def unindexTopLevelSyms(syms: Iterable[Symbol]) {
+    val keys = new ArrayBuffer[String]
+    for (sym <- syms) {
+      keys += lookupKey(sym)
+      for (mem <- try { sym.tpe.members } catch { case e => List() }) {
+        keys += lookupKey(mem)
+      }
+    }
+    indexer ! RemoveSymbolsReq(keys)
+  }
+
 
   private def isType(sym: Symbol): Boolean = {
     sym.isClass || sym.isModule || sym.isInterface
@@ -200,17 +225,6 @@ trait IndexerInterface { self: RichPresentationCompiler =>
   private def lookupKey(sym: Symbol): String = {
     if (isType(sym)) typeSymName(sym)
     else typeSymName(sym.owner) + "." + sym.nameString
-  }
-
-  def unindexTopLevelSyms(syms: Iterable[Symbol]) {
-    val keys = new ArrayBuffer[String]
-    for (sym <- syms) {
-      keys += lookupKey(sym)
-      for (mem <- try { sym.tpe.members } catch { case e => List() }) {
-        keys += lookupKey(mem)
-      }
-    }
-    indexer ! RemoveSymbolsReq(keys)
   }
 
   private implicit def symToSearchResult(sym: Symbol): SymbolSearchResult = {
@@ -234,24 +248,4 @@ trait IndexerInterface { self: RichPresentationCompiler =>
     }
   }
 
-  def indexTopLevelSyms(syms: Iterable[Symbol]) {
-    val infos = new ArrayBuffer[SymbolSearchResult]
-    for (sym <- syms) {
-      if (Indexer.isValidType(typeSymName(sym))) {
-        val key = lookupKey(sym)
-        infos += sym
-        for (mem <- try { sym.tpe.members } catch { case e => { List() } }) {
-          if (Indexer.isValidMethod(mem.nameString)) {
-            val key = lookupKey(mem)
-            infos += mem
-          }
-        }
-      }
-    }
-    indexer ! AddSymbolsReq(infos)
-  }
 }
-
-
-
-
