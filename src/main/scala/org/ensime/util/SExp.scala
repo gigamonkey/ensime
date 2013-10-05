@@ -1,7 +1,7 @@
 /**
 *  Copyright (c) 2010, Aemon Cannon
 *  All rights reserved.
-*  
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions are met:
 *      * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
 *      * Neither the name of ENSIME nor the
 *        names of its contributors may be used to endorse or promote products
 *        derived from this software without specific prior written permission.
-*  
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -117,10 +117,10 @@ object SExp extends RegexParsers {
 
   import scala.util.matching.Regex
 
-  lazy val string = regexGroups("""\"((?:[^\"\\]|\\.)*)\"""".r) ^^ { m => 
-    StringAtom(m.group(1).replace("\\\\", "\\")) 
+  lazy val string = regexGroups("""\"((?:[^\"\\]|\\.)*)\"""".r) ^^ { m =>
+    StringAtom(m.group(1).replace("\\\\", "\\"))
   }
-  lazy val sym = regex("[a-zA-Z][a-zA-Z0-9-:]*".r) ^^ { s => 
+  lazy val sym = regex("[a-zA-Z][a-zA-Z0-9-:]*".r) ^^ { s =>
     if(s == "nil") NilAtom()
     else if(s == "t") TruthAtom()
     else SymbolAtom(s)
@@ -176,9 +176,9 @@ object SExp extends RegexParsers {
   // Helpers for common case of key,val prop-list.
   // Omit keys for nil values.
   def propList(items: (String, SExp)*): SExpList = {
-    propList(items)
+    propListX(items)
   }
-  def propList(items: Iterable[(String, SExp)]): SExpList = {
+  def propListX(items: Iterable[(String, SExp)]): SExpList = {
     val nonNil = items.filter {
       case (s, NilAtom()) => false
       case (s, SExpList(items)) if items.isEmpty => false
@@ -231,7 +231,7 @@ object SExp extends RegexParsers {
     def toSExp = o
   }
 
-  implicit def listToSExpable(o: Iterable[SExpable]): SExpable = 
+  implicit def listToSExpable(o: Iterable[SExpable]): SExpable =
   new Iterable[SExpable] with SExpable {
     override def iterator = o.iterator
     override def toSExp = SExp(o.map { _.toSExp })
@@ -242,4 +242,3 @@ object SExp extends RegexParsers {
 abstract trait SExpable {
   implicit def toSExp(): SExp
 }
-

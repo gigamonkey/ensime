@@ -37,13 +37,7 @@ import scala.collection.mutable.{HashMap, HashSet, ListBuffer, MultiMap}
 
 case class Op(op: String, description: String)
 
-case class MethodBytecode(
-  className: String,
-  methodName: String,
-  methodSignature: Option[String],
-  byteCode: List[Op],
-  startLine: Int,
-  endLine: Int)
+case class MethodBytecode(className: String, methodName: String, methodSignature: Option[String], byteCode: List[Op], startLine: Int, endLine: Int)
 
 class ClassFileIndex(config: ProjectConfig) {
 
