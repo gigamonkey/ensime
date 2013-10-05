@@ -70,6 +70,7 @@ object LuceneIndex extends StringSimilarity {
     val i = s.indexOf("$")
     i == -1 || (i == (s.length - 1))
   }
+
   def isValidMethod(s: String): Boolean = {
     s.indexOf("$") == -1 && !s.equals("<init>") && !s.equals("this")
   }

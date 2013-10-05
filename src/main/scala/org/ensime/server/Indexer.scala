@@ -55,12 +55,13 @@ case class CommitReq()
 class Indexer(
   project: Project,
   protocol: ProtocolConversions,
-  config: ProjectConfig) extends Actor
+  config: ProjectConfig)
+    extends Actor
 {
 
   import protocol._
 
-  val index = new LuceneIndex {}
+  val index          = new LuceneIndex {}
   val classFileIndex = new ClassFileIndex(config)
 
   def act() {

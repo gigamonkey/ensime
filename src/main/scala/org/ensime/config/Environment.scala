@@ -27,35 +27,31 @@
 
 package org.ensime.config
 
-import scala.collection.mutable.ArrayBuffer
-import java.util.jar._
-import java.net._
+import java.net.{URL, JarURLConnection}
 
 object Environment {
+
+  private def p(k: String) = System.getProperty(k)
+
   def info: String = """
     |Environment:
     |  OS : %s
     |  Java : %s
     |  Scala : %s
     |  Ensime : %s
-  """.trim.stripMargin.format(osVersion, javaVersion, scalaVersion, ensimeVersion)
-
-  private def osVersion: String =
-    System.getProperty("os.name")
+  """.trim.stripMargin.format(p("os.name"), javaVersion, scalaVersion, ensimeVersion)
 
   private def javaVersion: String = {
-    val vmInfo = System.getProperty("java.vm.name") + " " + System.getProperty("java.vm.version")
-    val rtInfo = System.getProperty("java.runtime.name") + " " + System.getProperty("java.runtime.version")
-    vmInfo + ", " + rtInfo
+    p("java.vm.name")      + " " + p("java.vm.version") + ", " +
+    p("java.runtime.name") + " " + p("java.runtime.version")
   }
 
-  private def scalaVersion: String =
-    scala.util.Properties.versionString
+  private def scalaVersion: String = scala.util.Properties.versionString
 
   private def ensimeVersion: String =
     try {
       val pathToEnsimeJar = getClass.getProtectionDomain.getCodeSource.getLocation
-      val ensimeJar = new URL("jar:" + pathToEnsimeJar.toString + "!/").openConnection().asInstanceOf[JarURLConnection].getJarFile()
+      val ensimeJar       = new URL("jar:" + pathToEnsimeJar.toString + "!/").openConnection().asInstanceOf[JarURLConnection].getJarFile()
       ensimeJar.getManifest.getMainAttributes().getValue("Implementation-Version")
     } catch {
       case _: Exception => "unknown"

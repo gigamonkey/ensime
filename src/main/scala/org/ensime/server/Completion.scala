@@ -310,7 +310,7 @@ trait CompletionControl {
 
 trait Completion { self: RichPresentationCompiler =>
 
-  import self._
+  //import self._
 
   def completePackageMember(path: String, prefix: String): List[CompletionInfo] = {
     packageSymFromPath(path) match {

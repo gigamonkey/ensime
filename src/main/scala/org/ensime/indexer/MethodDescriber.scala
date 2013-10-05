@@ -110,8 +110,11 @@ trait MethodDescriber extends MethodVisitor {
 
   override def visitIntInsn(opcode: Int, operand: Int) {
     appendOp(OPCODES(opcode),
-      if (opcode == Opcodes.NEWARRAY)
-      { TYPES(operand) } else { operand.toString })
+      if (opcode == Opcodes.NEWARRAY) {
+        TYPES(operand)
+      } else {
+        operand.toString
+      })
   }
 
   override def visitVarInsn(opcode: Int, variable: Int) {
@@ -209,8 +212,7 @@ trait MethodDescriber extends MethodVisitor {
   }
 
   override def visitMultiANewArrayInsn(desc:String, dims:Int) {
-    appendOp("MULTIANEWARRAY", descriptor(FIELD_DESCRIPTOR, desc) +
-      " " + dims)
+    appendOp("MULTIANEWARRAY", descriptor(FIELD_DESCRIPTOR, desc) + " " + dims)
   }
 
 }
