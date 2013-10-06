@@ -223,22 +223,4 @@ object SExp extends RegexParsers {
     SExpList(List())
   }
 
-  implicit def toSExp(o: SExpable): SExp = {
-    o.toSExp
-  }
-
-  implicit def toSExpable(o: SExp): SExpable = new SExpable {
-    def toSExp = o
-  }
-
-  implicit def listToSExpable(o: Iterable[SExpable]): SExpable =
-  new Iterable[SExpable] with SExpable {
-    override def iterator = o.iterator
-    override def toSExp = SExp(o.map { _.toSExp })
-  }
-
-}
-
-abstract trait SExpable {
-  implicit def toSExp(): SExp
 }
