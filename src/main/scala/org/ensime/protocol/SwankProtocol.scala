@@ -40,6 +40,10 @@ import scala.util.parsing.input
 
 object SwankProtocol extends SwankProtocol {}
 
+final case class SwankWireFormat(sexp: SExp) extends WireFormat {
+  def toWireString: String = sexp.toReadableString
+}
+
 trait SwankProtocol extends Protocol {
 
   class ConnectionInfo {
@@ -580,7 +584,7 @@ trait SwankProtocol extends Protocol {
        *   :version "0.7")) 42)
        */
       case "swank:connection-info" => {
-        sendRPCReturn(toWF(new ConnectionInfo()), callId)
+        sendRPCReturn(SwankWireFormat(toSexp(new ConnectionInfo())), callId)
       }
 
       /**
@@ -1996,7 +2000,7 @@ trait SwankProtocol extends Protocol {
   }
 
   def sendRPCAckOK(callId: Int) {
-    sendRPCReturn(true, callId)
+    sendRPCReturn(toWF(true), callId)
   }
 
   def sendRPCReturn(value: WireFormat, callId: Int) {
@@ -2103,256 +2107,138 @@ trait SwankProtocol extends Protocol {
     }
   }
 
-  def toWF(obj: DebugLocation): SExp = {
+  /*
+   * Convert any of the objects that we may need to send across the wire into a SExp.
+   */
+  def toSexp(obj: Any): SExp = {
     obj match {
-      case obj: DebugObjectReference => toWF(obj)
-      case obj: DebugArrayElement => toWF(obj)
-      case obj: DebugObjectField => toWF(obj)
-      case obj: DebugStackSlot => toWF(obj)
-    }
-  }
-  def toWF(obj: DebugObjectReference): SExp = {
-    SExp(
-      key(":type"), 'reference,
-      key(":object-id"), obj.objectId.toString)
-  }
-  def toWF(obj: DebugArrayElement): SExp = {
-    SExp(
-      key(":type"), 'element,
-      key(":object-id"), obj.objectId.toString,
-      key(":index"), obj.index)
-  }
-  def toWF(obj: DebugObjectField): SExp = {
-    SExp(
-      key(":type"), 'field,
-      key(":object-id"), obj.objectId.toString,
-      key(":field"), obj.name)
-  }
-  def toWF(obj: DebugStackSlot): SExp = {
-    SExp(
-      key(":type"), 'slot,
-      key(":thread-id"), obj.threadId.toString,
-      key(":frame"), obj.frame,
-      key(":offset"), obj.offset)
-  }
 
-  def toWF(obj: DebugValue): SExp = {
-    obj match {
-      case obj: DebugPrimitiveValue => toWF(obj)
-      case obj: DebugObjectInstance => toWF(obj)
-      case obj: DebugArrayInstance => toWF(obj)
-      case obj: DebugStringInstance => toWF(obj)
-      case obj: DebugNullValue => toWF(obj)
-    }
-  }
-  def toWF(obj: DebugNullValue): SExp = {
-    SExp(
-      key(":val-type"), 'null,
-      key(":type-name"), obj.typeName)
-  }
-  def toWF(obj: DebugPrimitiveValue): SExp = {
-    SExp(
-      key(":val-type"), 'prim,
-      key(":summary"), obj.summary,
-      key(":type-name"), obj.typeName)
-  }
-  def toWF(obj: DebugClassField): SExp = {
-    SExp(
-      key(":index"), obj.index,
-      key(":name"), obj.name,
-      key(":summary"), obj.summary,
-      key(":type-name"), obj.typeName)
-  }
-  def toWF(obj: DebugObjectInstance): SExp = {
-    SExp(
-      key(":val-type"), 'obj,
-      key(":fields"), SExpList(obj.fields.map(toWF)),
-      key(":type-name"), obj.typeName,
-      key(":object-id"), obj.objectId.toString)
-  }
-  def toWF(obj: DebugStringInstance): SExp = {
-    SExp(
-      key(":val-type"), 'str,
-      key(":summary"), obj.summary,
-      key(":fields"), SExpList(obj.fields.map(toWF)),
-      key(":type-name"), obj.typeName,
-      key(":object-id"), obj.objectId.toString)
-  }
-  def toWF(obj: DebugArrayInstance): SExp = {
-    SExp(
-      key(":val-type"), 'arr,
-      key(":length"), obj.length,
-      key(":type-name"), obj.typeName,
-      key(":element-type-name"), obj.elementTypeName,
-      key(":object-id"), obj.objectId.toString)
-  }
+      case obj: DebugObjectReference =>
+        SExp(
+          key(":type"), 'reference,
+          key(":object-id"), obj.objectId.toString)
 
-  def toWF(obj: DebugStackLocal): SExp = {
-    SExp(
-      key(":index"), obj.index,
-      key(":name"), obj.name,
-      key(":summary"), obj.summary,
-      key(":type-name"), obj.typeName)
-  }
+      case obj: DebugArrayElement =>
+        SExp(
+          key(":type"), 'element,
+          key(":object-id"), obj.objectId.toString,
+          key(":index"), obj.index)
 
-  def toWF(obj: DebugStackFrame): SExp = {
-    SExp(
-      key(":index"), obj.index,
-      key(":locals"), SExpList(obj.locals.map(toWF)),
-      key(":num-args"), obj.numArguments,
-      key(":class-name"), obj.className,
-      key(":method-name"), obj.methodName,
-      key(":pc-location"), toWF(obj.pcLocation),
-      key(":this-object-id"), obj.thisObjectId.toString)
-  }
+      case obj: DebugObjectField =>
+        SExp(
+          key(":type"), 'field,
+          key(":object-id"), obj.objectId.toString,
+          key(":field"), obj.name)
 
-  def toWF(obj: DebugBacktrace): SExp = {
-    SExp(
-      key(":frames"), SExpList(obj.frames.map(toWF)),
-      key(":thread-id"), obj.threadId.toString,
-      key(":thread-name"), obj.threadName)
-  }
+      case obj: DebugStackSlot =>
+        SExp(
+          key(":type"), 'slot,
+          key(":thread-id"), obj.threadId.toString,
+          key(":frame"), obj.frame,
+          key(":offset"), obj.offset)
 
-  def toWF(pos: SourcePosition): SExp = {
-    SExp(
-      key(":file"), pos.file.getAbsolutePath(),
-      key(":line"), pos.line)
-  }
+      case obj: DebugNullValue =>
+        SExp(
+          key(":val-type"), 'null,
+          key(":type-name"), obj.typeName)
 
-  def toWF(info: ConnectionInfo): SExp = {
-    SExp(
-      key(":pid"), 'nil,
-      key(":implementation"),
-      SExp(key(":name"), info.serverName),
-      key(":version"), info.protocolVersion)
-  }
+      case obj: DebugPrimitiveValue =>
+        SExp(
+          key(":val-type"), 'prim,
+          key(":summary"), obj.summary,
+          key(":type-name"), obj.typeName)
 
-  def toWF(evt: SendBackgroundMessageEvent): SExp = {
-    SExp(key(":background-message"), evt.code,
-      evt.detail.map(strToSExp).getOrElse(NilAtom()))
-  }
+      case obj: DebugClassField =>
+        SExp(
+          key(":index"), obj.index,
+          key(":name"), obj.name,
+          key(":summary"), obj.summary,
+          key(":type-name"), obj.typeName)
 
-  /**
-   * Doc Event:
-   *   :compiler-ready
-   * Summary:
-   *   Signal that the compiler has finished its initial compilation and the server
-   *   is ready to accept RPC calls.
-   * Structure:
-   *   (:compiler-ready)
-   */
-  def toWF(evt: AnalyzerReadyEvent): SExp = {
-    SExp(key(":compiler-ready"))
-  }
+      case obj: DebugObjectInstance =>
+        SExp(
+          key(":val-type"), 'obj,
+          key(":fields"), SExpList(obj.fields.map(toSexp)),
+          key(":type-name"), obj.typeName,
+          key(":object-id"), obj.objectId.toString)
 
-  /**
-   * Doc Event:
-   *   :full-typecheck-finished
-   * Summary:
-   *   Signal that the compiler has finished compilation of the entire project.
-   * Structure:
-   *   (:full-typecheck-finished)
-   */
-  def toWF(evt: FullTypeCheckCompleteEvent): SExp = {
-    SExp(key(":full-typecheck-finished"))
-  }
+      case obj: DebugStringInstance =>
+        SExp(
+          key(":val-type"), 'str,
+          key(":summary"), obj.summary,
+          key(":fields"), SExpList(obj.fields.map(toSexp)),
+          key(":type-name"), obj.typeName,
+          key(":object-id"), obj.objectId.toString)
 
-  /**
-   * Doc Event:
-   *   :indexer-ready
-   * Summary:
-   *   Signal that the indexer has finished indexing the classpath.
-   * Structure:
-   *   (:indexer-ready)
-   */
-  def toWF(evt: IndexerReadyEvent): SExp = {
-    SExp(key(":indexer-ready"))
-  }
+      case obj: DebugArrayInstance =>
+        SExp(
+          key(":val-type"), 'arr,
+          key(":length"), obj.length,
+          key(":type-name"), obj.typeName,
+          key(":element-type-name"), obj.elementTypeName,
+          key(":object-id"), obj.objectId.toString)
 
-  /**
-   * Doc Event:
-   *   :scala-notes
-   * Summary:
-   *   Notify client when Scala compiler generates errors,warnings or other notes.
-   * Structure:
-   *   (:scala-notes
-   *   notes //List of Note
-   *   )
-   */
-  //-----------------------
-  /**
-   * Doc Event:
-   *   :java-notes
-   * Summary:
-   *   Notify client when Java compiler generates errors,warnings or other notes.
-   * Structure:
-   *   (:java-notes
-   *   notes //List of Note
-   *   )
-   */
-  def toWF(evt: NewNotesEvent): SExp = {
-    if (evt.lang == 'scala) SExp(key(":scala-notes"), toWF(evt.notelist))
-    else SExp(key(":java-notes"), toWF(evt.notelist))
-  }
+      case obj: DebugStackLocal =>
+        SExp(
+          key(":index"), obj.index,
+          key(":name"), obj.name,
+          key(":summary"), obj.summary,
+          key(":type-name"), obj.typeName)
 
-  /**
-   * Doc Event:
-   *   :clear-all-scala-notes
-   * Summary:
-   *   Notify client when Scala notes have become invalidated. Editor should consider
-   *   all Scala related notes to be stale at this point.
-   * Structure:
-   *   (:clear-all-scala-notes)
-   */
-  //-----------------------
-  /**
-   * Doc Event:
-   *   :clear-all-java-notes
-   * Summary:
-   *   Notify client when Java notes have become invalidated. Editor should consider
-   *   all Java related notes to be stale at this point.
-   * Structure:
-   *   (:clear-all-java-notes)
-   */
-  def toWF(evt: ClearAllNotesEvent): SExp = {
-    if (evt.lang == 'scala) SExp(key(":clear-all-scala-notes"))
-    else SExp(key(":clear-all-java-notes"))
-  }
+      case obj: DebugStackFrame =>
+        SExp(
+          key(":index"), obj.index,
+          key(":locals"), SExpList(obj.locals.map(toSexp)),
+          key(":num-args"), obj.numArguments,
+          key(":class-name"), obj.className,
+          key(":method-name"), obj.methodName,
+          key(":pc-location"), toSexp(obj.pcLocation),
+          key(":this-object-id"), obj.thisObjectId.toString)
 
-  def toWF(evt: DebugEvent): SExp = {
-    evt match {
-      /**
-       * Doc Event:
-       *   :debug-event (:type output)
-       * Summary:
-       *   Communicates stdout/stderr of debugged VM to client.
-       * Structure:
-       *   (:debug-event
-       *     (:type //Symbol: output
-       *      :body //String: A chunk of output text
-       *   ))
-       */
-      case DebugOutputEvent(out: String) => {
+      case obj: DebugBacktrace =>
+        SExp(
+          key(":frames"), SExpList(obj.frames.map(toSexp)),
+          key(":thread-id"), obj.threadId.toString,
+          key(":thread-name"), obj.threadName)
+
+      case pos: SourcePosition =>
+        SExp(
+          key(":file"), pos.file.getAbsolutePath(),
+          key(":line"), pos.line)
+
+      case info: ConnectionInfo =>
+        SExp(
+          key(":pid"), 'nil,
+          key(":implementation"),
+          SExp(key(":name"), info.serverName),
+          key(":version"), info.protocolVersion)
+
+      case evt: SendBackgroundMessageEvent =>
+        SExp(key(":background-message"), evt.code,
+          evt.detail.map(strToSExp).getOrElse(NilAtom()))
+
+      case evt: AnalyzerReadyEvent =>
+        SExp(key(":compiler-ready"))
+
+      case evt: FullTypeCheckCompleteEvent =>
+        SExp(key(":full-typecheck-finished"))
+
+      case evt: IndexerReadyEvent =>
+        SExp(key(":indexer-ready"))
+
+      case evt: NewNotesEvent =>
+        if (evt.lang == 'scala) SExp(key(":scala-notes"), toSexp(evt.notelist))
+        else SExp(key(":java-notes"), toSexp(evt.notelist))
+
+      case evt: ClearAllNotesEvent =>
+        if (evt.lang == 'scala) SExp(key(":clear-all-scala-notes"))
+        else SExp(key(":clear-all-java-notes"))
+
+      case DebugOutputEvent(out: String) =>
         SExp(key(":debug-event"),
           SExp(key(":type"), 'output,
             key(":body"), out))
-      }
 
-      /**
-       * Doc Event:
-       *   :debug-event (:type step)
-       * Summary:
-       *   Signals that the debugged VM has stepped to a new location and is now
-       *     paused awaiting control.
-       * Structure:
-       *   (:debug-event
-       *     (:type //Symbol: step
-       *      :thread-id //String: The unique thread id of the paused thread.
-       *      :thread-name //String: The informal name of the paused thread.
-       *      :file //String: The source file the VM stepped into.
-       *      :line //Int: The source line the VM stepped to.
-       *   ))
-       */
       case DebugStepEvent(threadId, threadName, pos) => {
         SExp(key(":debug-event"),
           SExp(key(":type"), 'step,
@@ -2362,20 +2248,6 @@ trait SwankProtocol extends Protocol {
             key(":line"), pos.line))
       }
 
-      /**
-       * Doc Event:
-       *   :debug-event (:type breakpoint)
-       * Summary:
-       *   Signals that the debugged VM has stopped at a breakpoint.
-       * Structure:
-       *   (:debug-event
-       *     (:type //Symbol: breakpoint
-       *      :thread-id //String: The unique thread id of the paused thread.
-       *      :thread-name //String: The informal name of the paused thread.
-       *      :file //String: The source file the VM stepped into.
-       *      :line //Int: The source line the VM stepped to.
-       *   ))
-       */
       case DebugBreakEvent(threadId, threadName, pos) => {
         SExp(key(":debug-event"),
           SExp(key(":type"), 'breakpoint,
@@ -2385,69 +2257,21 @@ trait SwankProtocol extends Protocol {
             key(":line"), pos.line))
       }
 
-      /**
-       * Doc Event:
-       *   :debug-event (:type death)
-       * Summary:
-       *   Signals that the debugged VM has exited.
-       * Structure:
-       *   (:debug-event
-       *     (:type //Symbol: death
-       *   ))
-       */
       case DebugVMDeathEvent() => {
         SExp(key(":debug-event"),
           SExp(key(":type"), 'death))
       }
 
-      /**
-       * Doc Event:
-       *   :debug-event (:type start)
-       * Summary:
-       *   Signals that the debugged VM has started.
-       * Structure:
-       *   (:debug-event
-       *     (:type //Symbol: start
-       *   ))
-       */
       case DebugVMStartEvent() => {
         SExp(key(":debug-event"),
           SExp(key(":type"), 'start))
       }
 
-      /**
-       * Doc Event:
-       *   :debug-event (:type disconnect)
-       * Summary:
-       *   Signals that the debugger has disconnected form the debugged VM.
-       * Structure:
-       *   (:debug-event
-       *     (:type //Symbol: disconnect
-       *   ))
-       */
       case DebugVMDisconnectEvent() => {
         SExp(key(":debug-event"),
           SExp(key(":type"), 'disconnect))
       }
 
-      /**
-       * Doc Event:
-       *   :debug-event (:type exception)
-       * Summary:
-       *   Signals that the debugged VM has thrown an exception and is now paused
-       *     waiting for control.
-       * Structure:
-       *   (:debug-event
-       *     (:type //Symbol: exception
-       *      :exception //String: The unique object id of the exception.
-       *      :thread-id //String: The unique thread id of the paused thread.
-       *      :thread-name //String: The informal name of the paused thread.
-       *      :file //String: The source file where the exception was caught,
-       *         or nil if no location is known.
-       *      :line //Int: The source line where the exception was thrown,
-       *         or nil if no location is known.
-       *   ))
-       */
       case DebugExceptionEvent(excId, threadId, threadName, maybePos) => {
         SExp(key(":debug-event"),
           SExp(key(":type"), 'exception,
@@ -2462,360 +2286,328 @@ trait SwankProtocol extends Protocol {
             }.getOrElse('nil)))
       }
 
-      /**
-       * Doc Event:
-       *   :debug-event (:type threadStart)
-       * Summary:
-       *   Signals that a new thread has started.
-       * Structure:
-       *   (:debug-event
-       *     (:type //Symbol: threadStart
-       *      :thread-id //String: The unique thread id of the new thread.
-       *   ))
-       */
       case DebugThreadStartEvent(threadId: Long) => {
         SExp(key(":debug-event"),
           SExp(key(":type"), 'threadStart,
             key(":thread-id"), threadId.toString))
       }
 
-      /**
-       * Doc Event:
-       *   :debug-event (:type threadDeath)
-       * Summary:
-       *   Signals that a new thread has died.
-       * Structure:
-       *   (:debug-event
-       *     (:type //Symbol: threadDeath
-       *      :thread-id //String: The unique thread id of the new thread.
-       *   ))
-       */
       case DebugThreadDeathEvent(threadId: Long) => {
         SExp(key(":debug-event"),
           SExp(key(":type"), 'threadDeath,
             key(":thread-id"), threadId.toString))
       }
-      case _ => SExp(key(":debug-event"))
-    }
 
-  }
+      case evt: DebugEvent =>
+        SExp(key(":debug-event"))
 
-  def toWF(bp: Breakpoint): SExp = {
-    SExp(
-      key(":file"), bp.pos.file.getAbsolutePath,
-      key(":line"), bp.pos.line)
-  }
+      case bp: Breakpoint =>
+        SExp(
+          key(":file"), bp.pos.file.getAbsolutePath,
+          key(":line"), bp.pos.line)
 
-  def toWF(bps: BreakpointList): SExp = {
-    SExp(
-      key(":active"), SExpList(bps.active.map { toWF(_) }),
-      key(":pending"), SExpList(bps.pending.map { toWF(_) }))
-  }
+      case bps: BreakpointList =>
+        SExp(
+          key(":active"), SExpList(bps.active.map { toSexp(_) }),
+          key(":pending"), SExpList(bps.pending.map { toSexp(_) }))
 
-  def toWF(config: ProjectConfig): SExp = {
-    SExp(
-      key(":project-name"), config.name.map(StringAtom).getOrElse('nil),
-      key(":source-roots"), SExp(
-        (config.sourceRoots ++ config.referenceSourceRoots).map {
-          f => StringAtom(f.getPath)
-        }))
-  }
+      case config: ProjectConfig =>
+        SExp(
+          key(":project-name"), config.name.map(StringAtom).getOrElse('nil),
+          key(":source-roots"), SExp(
+            (config.sourceRoots ++ config.referenceSourceRoots).map {
+              f => StringAtom(f.getPath)
+            }))
 
-  def toWF(config: ReplConfig): SExp = {
-    SExp.propList((":classpath", strToSExp(config.classpath)))
-  }
+      case config: ReplConfig =>
+        SExp.propList((":classpath", strToSExp(config.classpath)))
 
-  def toWF(value: Boolean): SExp = {
-    if (value) TruthAtom()
-    else NilAtom()
-  }
+      case value: Boolean =>
+        if (value) TruthAtom() else NilAtom()
 
-  def toWF(value: Null): SExp = {
-    NilAtom()
-  }
+      case value: Any if (value == null) => NilAtom()
 
-  def toWF(value: String): SExp = {
-    StringAtom(value)
-  }
+      case value: String =>
+        StringAtom(value)
 
-  def toWF(note: Note): SExp = {
-    SExp(
-      key(":severity"), note.friendlySeverity,
-      key(":msg"), note.msg,
-      key(":beg"), note.beg,
-      key(":end"), note.end,
-      key(":line"), note.line,
-      key(":col"), note.col,
-      key(":file"), note.file)
-  }
+      case note: Note =>
+        SExp(
+          key(":severity"), note.friendlySeverity,
+          key(":msg"), note.msg,
+          key(":beg"), note.beg,
+          key(":end"), note.end,
+          key(":line"), note.line,
+          key(":col"), note.col,
+          key(":file"), note.file)
 
-  def toWF(notelist: NoteList): SExp = {
-    val NoteList(isFull, notes) = notelist
-    SExp(
-      key(":is-full"),
-      toWF(isFull),
-      key(":notes"),
-      SExpList(notes.map(toWF)))
-  }
+      case notelist: NoteList => {
+        val NoteList(isFull, notes) = notelist
+        SExp(
+          key(":is-full"),
+          toSexp(isFull),
+          key(":notes"),
+          SExpList(notes.map(toSexp)))
+      }
 
-  def toWF(values: Iterable[WireFormat]): SExp = {
-    SExpList(values.map(ea => ea.asInstanceOf[SExp]))
-  }
+      case values: Iterable[WireFormat] =>
+        SExpList(values.map(ea => ea.asInstanceOf[SExp]))
 
-  def toWF(value: CompletionSignature): SExp = {
-    SExp(
-      SExp(value.sections.map { section =>
-        SExpList(section.map { param =>
-          SExp(param._1, param._2)
-        })
-      }),
-      value.result)
-  }
+      case value: CompletionSignature =>
+        SExp(
+          SExp(value.sections.map { section =>
+            SExpList(section.map { param =>
+              SExp(param._1, param._2)
+            })
+          }),
+          value.result)
 
-  def toWF(value: CompletionInfo): SExp = {
-    SExp.propList(
-      (":name", value.name),
-      (":type-sig", toWF(value.tpeSig)),
-      (":type-id", value.tpeId),
-      (":is-callable", value.isCallable),
-      (":to-insert", value.toInsert.map(strToSExp).getOrElse('nil)))
-  }
+      case value: CompletionInfo =>
+        SExp.propList(
+          (":name", value.name),
+          (":type-sig", toSexp(value.tpeSig)),
+          (":type-id", value.tpeId),
+          (":is-callable", value.isCallable),
+          (":to-insert", value.toInsert.map(strToSExp).getOrElse('nil)))
 
-  def toWF(value: CompletionInfoList): SExp = {
-    SExp.propList(
-      (":prefix", value.prefix),
-      (":completions", SExpList(value.completions.map(toWF))))
-  }
+      case value: CompletionInfoList =>
+        SExp.propList(
+          (":prefix", value.prefix),
+          (":completions", SExpList(value.completions.map(toSexp))))
 
-  def toWF(value: PackageMemberInfoLight): SExp = {
-    SExp(key(":name"), value.name)
-  }
+      case value: PackageMemberInfoLight =>
+        SExp(key(":name"), value.name)
 
-  def toWF(value: SymbolInfo): SExp = {
-    SExp.propList(
-      (":name", value.name),
-      (":local-name", value.localName),
-      (":type", toWF(value.tpe)),
-      (":decl-pos", value.declPos),
-      (":is-callable", value.isCallable),
-      (":owner-type-id", value.ownerTypeId.map(intToSExp).getOrElse('nil)))
-  }
+      case value: SymbolInfo =>
+        SExp.propList(
+          (":name", value.name),
+          (":local-name", value.localName),
+          (":type", toSexp(value.tpe)),
+          (":decl-pos", value.declPos),
+          (":is-callable", value.isCallable),
+          (":owner-type-id", value.ownerTypeId.map(intToSExp).getOrElse('nil)))
 
-  def toWF(value: FileRange): SExp = {
-    SExp.propList(
-      (":file", value.file),
-      (":start", value.start),
-      (":end", value.end))
-  }
+      case value: FileRange =>
+        SExp.propList(
+          (":file", value.file),
+          (":start", value.start),
+          (":end", value.end))
 
-  def toWF(value: Position): SExp = {
-    posToSExp(value)
-  }
+      case value: Position =>
+        posToSExp(value)
 
-  def toWF(value: RangePosition): SExp = {
-    posToSExp(value)
-  }
+      case value: RangePosition =>
+        posToSExp(value)
 
-  def toWF(value: NamedTypeMemberInfoLight): SExp = {
-    SExp.propList(
-      (":name", value.name),
-      (":type-sig", value.tpeSig),
-      (":type-id", value.tpeId),
-      (":is-callable", value.isCallable))
-  }
+      case value: NamedTypeMemberInfoLight =>
+        SExp.propList(
+          (":name", value.name),
+          (":type-sig", value.tpeSig),
+          (":type-id", value.tpeId),
+          (":is-callable", value.isCallable))
 
-  def toWF(value: NamedTypeMemberInfo): SExp = {
-    SExp.propList(
-      (":name", value.name),
-      (":type", toWF(value.tpe)),
-      (":pos", value.pos),
-      (":decl-as", value.declaredAs))
-  }
+      case value: NamedTypeMemberInfo =>
+        SExp.propList(
+          (":name", value.name),
+          (":type", toSexp(value.tpe)),
+          (":pos", value.pos),
+          (":decl-as", value.declaredAs))
 
-  def toWF(value: EntityInfo): SExp = {
-    value match {
-      case value: PackageInfo => toWF(value)
-      case value: TypeInfo => toWF(value)
-      case value: NamedTypeMemberInfo => toWF(value)
-      case value: NamedTypeMemberInfoLight => toWF(value)
-      case value => throw new IllegalStateException("Unknown EntityInfo: " + value)
-    }
-  }
 
-  def toWF(value: TypeInfo): SExp = {
-    value match {
       case value: ArrowTypeInfo =>
-        {
           SExp.propList(
             (":name", value.name),
             (":type-id", value.id),
             (":arrow-type", true),
-            (":result-type", toWF(value.resultType)),
-            (":param-sections", SExp(value.paramSections.map(toWF))))
-        }
+            (":result-type", toSexp(value.resultType)),
+            (":param-sections", SExp(value.paramSections.map(toSexp))))
+
       case value: TypeInfo =>
-        {
           SExp.propList((":name", value.name),
             (":type-id", value.id),
             (":full-name", value.fullName),
             (":decl-as", value.declaredAs),
-            (":type-args", SExp(value.args.map(toWF))),
-            (":members", SExp(value.members.map(toWF))),
+            (":type-args", SExp(value.args.map(toSexp))),
+            (":members", SExp(value.members.map(toSexp))),
             (":pos", value.pos),
             (":outer-type-id", value.outerTypeId.map(intToSExp).getOrElse('nil)))
+
+
+      case value: PackageInfo =>
+        SExp.propList((":name", value.name),
+          (":info-type", 'package),
+          (":full-name", value.fullname),
+          (":members", SExpList(value.members.map(toSexp))))
+
+      case value: CallCompletionInfo =>
+        SExp.propList(
+          (":result-type", toSexp(value.resultType)),
+          (":param-sections", SExp(value.paramSections.map(toSexp))))
+
+      case value: ParamSectionInfo =>
+        SExp.propList(
+          (":params", SExp(value.params.map {case (nm, tp) => SExp(nm, toSexp(tp))})),
+          (":is-implicit", value.isImplicit))
+
+      case value: InterfaceInfo =>
+        SExp.propList(
+          (":type", toSexp(value.tpe)),
+          (":via-view", value.viaView.map(strToSExp).getOrElse('nil)))
+
+      case value: TypeInspectInfo =>
+        SExp.propList(
+          (":type", toSexp(value.tpe)),
+          (":info-type", 'typeInspect),
+          (":companion-id", value.companionId match {
+            case Some(id) => id
+            case None => 'nil
+          }), (":interfaces", SExp(value.supers.map(toSexp))))
+
+      case value: RefactorFailure =>
+        SExp.propList(
+          (":procedure-id", value.procedureId),
+          (":status", 'failure),
+          (":reason", value.message))
+
+      case value: RefactorEffect =>
+        SExp.propList(
+          (":procedure-id", value.procedureId),
+          (":refactor-type", value.refactorType),
+          (":status", 'success),
+          (":changes", SExpList(value.changes.map(toSexp))))
+
+      case value: RefactorResult =>
+        SExp.propList(
+          (":procedure-id", value.procedureId),
+          (":refactor-type", value.refactorType),
+          (":status", 'success),
+          (":touched-files", SExpList(value.touched.map(f => strToSExp(f.getAbsolutePath)))))
+
+      case value: SymbolSearchResults =>
+        SExpList(value.syms.map(toSexp))
+
+      case value: ImportSuggestions =>
+        SExpList(value.symLists.map { l => SExpList(l.map(toSexp)) })
+
+      case pos: Option[(String, Int)] =>
+        pos match {
+          case Some((f, o)) => SExp.propList((":file", f), (":offset", o))
+          case _ => 'nil
         }
-      case value => throw new IllegalStateException("Unknown TypeInfo: " + value)
-    }
-  }
 
-  def toWF(value: PackageInfo): SExp = {
-    SExp.propList((":name", value.name),
-      (":info-type", 'package),
-      (":full-name", value.fullname),
-      (":members", SExpList(value.members.map(toWF))))
-  }
-
-  def toWF(value: CallCompletionInfo): SExp = {
-    SExp.propList(
-      (":result-type", toWF(value.resultType)),
-      (":param-sections", SExp(value.paramSections.map(toWF))))
-  }
-
-  def toWF(value: ParamSectionInfo): SExp = {
-    SExp.propList(
-      (":params", SExp(value.params.map {
-        case (nm, tp) => SExp(nm, toWF(tp))
-      })),
-      (":is-implicit", value.isImplicit))
-
-  }
-
-  def toWF(value: InterfaceInfo): SExp = {
-    SExp.propList(
-      (":type", toWF(value.tpe)),
-      (":via-view", value.viaView.map(strToSExp).getOrElse('nil)))
-  }
-
-  def toWF(value: TypeInspectInfo): SExp = {
-    SExp.propList(
-      (":type", toWF(value.tpe)),
-      (":info-type", 'typeInspect),
-      (":companion-id", value.companionId match {
-        case Some(id) => id
-        case None => 'nil
-      }), (":interfaces", SExp(value.supers.map(toWF))))
-  }
-
-  def toWF(value: RefactorFailure): SExp = {
-    SExp.propList(
-      (":procedure-id", value.procedureId),
-      (":status", 'failure),
-      (":reason", value.message))
-  }
-
-  def toWF(value: RefactorEffect): SExp = {
-    SExp.propList(
-      (":procedure-id", value.procedureId),
-      (":refactor-type", value.refactorType),
-      (":status", 'success),
-      (":changes", SExpList(value.changes.map(changeToWF))))
-  }
-
-  def toWF(value: RefactorResult): SExp = {
-    SExp.propList(
-      (":procedure-id", value.procedureId),
-      (":refactor-type", value.refactorType),
-      (":status", 'success),
-      (":touched-files", SExpList(value.touched.map(f => strToSExp(f.getAbsolutePath)))))
-  }
-
-  def toWF(value: SymbolSearchResults): SExp = {
-    SExpList(value.syms.map(toWF))
-  }
-
-  def toWF(value: ImportSuggestions): SExp = {
-    SExpList(value.symLists.map { l => SExpList(l.map(toWF)) })
-  }
-
-  private def toWF(pos: Option[(String, Int)]): SExp = {
-    pos match {
-      case Some((f, o)) => SExp.propList((":file", f), (":offset", o))
-      case _ => 'nil
-    }
-  }
-
-  def toWF(value: SymbolSearchResult): SExp = {
-    value match {
-      case value: TypeSearchResult => {
+      case value: TypeSearchResult =>
         SExp.propList(
           (":name", value.name),
           (":local-name", value.localName),
           (":decl-as", value.declaredAs),
-          (":pos", toWF(value.pos)))
-      }
-      case value: MethodSearchResult => {
+          (":pos", toSexp(value.pos)))
+
+      case value: MethodSearchResult =>
         SExp.propList(
           (":name", value.name),
           (":local-name", value.localName),
           (":decl-as", value.declaredAs),
-          (":pos", toWF(value.pos)),
+          (":pos", toSexp(value.pos)),
           (":owner-name", value.owner))
-      }
-      case value => throw new IllegalStateException(
-        "Unknown SymbolSearchResult: " + value)
-    }
 
-  }
 
-  def toWF(value: Undo): SExp = {
-    SExp.propList(
-      (":id", value.id),
-      (":changes", SExpList(value.changes.map(changeToWF))),
-      (":summary", value.summary))
-  }
+      case value: Undo =>
+        SExp.propList(
+          (":id", value.id),
+          (":changes", SExpList(value.changes.map(toSexp))),
+          (":summary", value.summary))
 
-  def toWF(value: UndoResult): SExp = {
-    SExp.propList(
-      (":id", value.id),
-      (":touched-files", SExpList(value.touched.map(f => strToSExp(f.getAbsolutePath)))))
-  }
+      case value: UndoResult =>
+        SExp.propList(
+          (":id", value.id),
+          (":touched-files", SExpList(value.touched.map(f => strToSExp(f.getAbsolutePath)))))
 
-  def toWF(value: SymbolDesignations): SExp = {
-    SExp.propList(
-      (":file", value.file),
-      (":syms",
-        SExpList(value.syms.map { s =>
-          SExpList(List(s.symType, s.start, s.end))
-        })))
-  }
+      case value: SymbolDesignations =>
+        SExp.propList(
+          (":file", value.file),
+          (":syms",
+            SExpList(value.syms.map { s =>
+              SExpList(List(s.symType, s.start, s.end))
+            })))
 
-  def toWF(vmStatus: DebugVmStatus): SExp = {
-    vmStatus match {
       case DebugVmSuccess() => SExp(
         key(":status"), ("success"))
+
       case DebugVmError(code, details) => SExp(
         key(":status"), ("error"),
         key(":error-code"), (code),
         key(":details"), (details))
+
+      case method: MethodBytecode =>
+        SExp.propList(
+          (":class-name", method.className),
+          (":name", method.methodName),
+          (":signature", method.methodSignature.map(strToSExp).getOrElse('nil)),
+          (":bytecode", SExpList(method.byteCode.map { op =>
+            SExp(op.op, op.description)
+          })))
+
+      case ch: FileEdit =>
+        SExp.propList(
+          (":file", ch.file.getCanonicalPath()),
+          (":text", ch.text),
+          (":from", ch.from),
+          (":to", ch.to))
+
+      case value: SymbolSearchResult =>
+            throw new IllegalStateException("Unknown SymbolSearchResult: " + value)
+
+      case value: TypeInfo =>
+        throw new IllegalStateException("Unknown TypeInfo: " + value)
+
+      case value: EntityInfo =>
+        throw new IllegalStateException("Unknown EntityInfo: " + value)
+
     }
   }
 
-  def toWF(method: MethodBytecode): SExp = {
-    SExp.propList(
-      (":class-name", method.className),
-      (":name", method.methodName),
-      (":signature", method.methodSignature.map(strToSExp).getOrElse('nil)),
-      (":bytecode", SExpList(method.byteCode.map { op =>
-        SExp(op.op, op.description)
-      })))
-  }
+  def nullToWF(): WireFormat                          = SwankWireFormat(toSexp(null))
+  def toWF(x: AnalyzerReadyEvent): WireFormat         = SwankWireFormat(toSexp(x))
+  def toWF(x: ClearAllNotesEvent): WireFormat         = SwankWireFormat(toSexp(x))
+  def toWF(x: FullTypeCheckCompleteEvent): WireFormat = SwankWireFormat(toSexp(x))
+  def toWF(x: NewNotesEvent): WireFormat              = SwankWireFormat(toSexp(x))
+  def toWF(x: SendBackgroundMessageEvent): WireFormat = SwankWireFormat(toSexp(x))
+  def toWF(x: CallCompletionInfo): WireFormat         = SwankWireFormat(toSexp(x))
+  def toWF(x: CompletionInfo): WireFormat             = SwankWireFormat(toSexp(x))
+  def toWF(x: CompletionInfoList): WireFormat         = SwankWireFormat(toSexp(x))
+  def toWF(x: PackageInfo): WireFormat                = SwankWireFormat(toSexp(x))
+  def toWF(x: RangePosition): WireFormat              = SwankWireFormat(toSexp(x))
+  def toWF(x: SymbolDesignations): WireFormat         = SwankWireFormat(toSexp(x))
+  def toWF(x: SymbolInfo): WireFormat                 = SwankWireFormat(toSexp(x))
+  def toWF(x: TypeInfo): WireFormat                   = SwankWireFormat(toSexp(x))
+  def toWF(x: TypeInspectInfo): WireFormat            = SwankWireFormat(toSexp(x))
 
-  private def changeToWF(ch: FileEdit): SExp = {
-    SExp.propList(
-      (":file", ch.file.getCanonicalPath()),
-      (":text", ch.text),
-      (":from", ch.from),
-      (":to", ch.to))
-  }
+  def toWF(x: BreakpointList): WireFormat             = SwankWireFormat(toSexp(x))
+  def toWF(x: DebugBacktrace): WireFormat             = SwankWireFormat(toSexp(x))
+  def toWF(x: DebugEvent): WireFormat                 = SwankWireFormat(toSexp(x))
+  def toWF(x: DebugLocation): WireFormat              = SwankWireFormat(toSexp(x))
+  def toWF(x: DebugValue): WireFormat                 = SwankWireFormat(toSexp(x))
+  def toWF(x: String): WireFormat                     = SwankWireFormat(toSexp(x))
+  def toWF(x: DebugVmStatus): WireFormat              = SwankWireFormat(toSexp(x))
+
+  def toWF(x: Note): WireFormat                       = SwankWireFormat(toSexp(x))
+  def toWF(x: Iterable[WireFormat]): WireFormat       = SwankWireFormat(toSexp(x))
+
+  def toWF(x: IndexerReadyEvent): WireFormat          = SwankWireFormat(toSexp(x))
+  def toWF(x: MethodBytecode): WireFormat             = SwankWireFormat(toSexp(x))
+  def toWF(x: ImportSuggestions): WireFormat          = SwankWireFormat(toSexp(x))
+  def toWF(x: SymbolSearchResults): WireFormat        = SwankWireFormat(toSexp(x))
+
+  def toWF(x: Boolean): WireFormat                    = SwankWireFormat(toSexp(x))
+
+  def toWF(x: ProjectConfig): WireFormat              = SwankWireFormat(toSexp(x))
+  def toWF(x: ReplConfig): WireFormat                 = SwankWireFormat(toSexp(x))
+  def toWF(x: FileRange): WireFormat                  = SwankWireFormat(toSexp(x))
+  def toWF(x: Undo): WireFormat                       = SwankWireFormat(toSexp(x))
+  def toWF(x: UndoResult): WireFormat                 = SwankWireFormat(toSexp(x))
+
+  def toWF(x: RefactorEffect): WireFormat             = SwankWireFormat(toSexp(x))
+  def toWF(x: RefactorFailure): WireFormat            = SwankWireFormat(toSexp(x))
+  def toWF(x: RefactorResult): WireFormat             = SwankWireFormat(toSexp(x))
+
 
 }

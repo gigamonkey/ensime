@@ -30,7 +30,6 @@ package org.ensime.server
 import java.io._
 import java.net.{ ServerSocket, Socket }
 import org.ensime.protocol._
-import org.ensime.util.WireFormat
 import org.ensime.config.Environment
 import scala.actors._
 import scala.actors.Actor._

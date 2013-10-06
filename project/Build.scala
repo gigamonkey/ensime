@@ -112,10 +112,10 @@ object EnsimeBuild extends Build {
           import org.ensime.sbt.Plugin.Settings.ensimeConfig
           import org.ensime.sbt.util.SExp._
           ensimeConfig := sexp(
-	    key(":reference-source-roots"), sexp(
-	      "/Users/aemon/lib/scala/src/compiler",
-	      "/Users/aemon/lib/scala/src/library")
-	  )
+            key(":reference-source-roots"), sexp(
+              "/Users/aemon/lib/scala/src/compiler",
+              "/Users/aemon/lib/scala/src/library")
+          )
         }
       ))
   }

@@ -154,8 +154,6 @@ trait RefactoringHandler { self: Analyzer =>
 
 trait RefactoringControl { self: RichCompilerControl with RefactoringImpl =>
 
-  import org.ensime.util.{ Symbols => S }
-
   def askPerformRefactor(
     procId: Int,
     tpe: scala.Symbol,
@@ -262,12 +260,11 @@ trait RefactoringImpl { self: RichPresentationCompiler =>
     def badArgs = Left(RefactorFailure(procId, "Incorrect arguments passed to " +
       tpe + ": " + params))
 
-    import org.ensime.util.{ Symbols => S }
     try {
       tpe match {
-        case S.Rename => {
-          (params.get(S.NewName), params.get(S.File), params.get(S.Start),
-            params.get(S.End)) match {
+        case Symbols.Rename => {
+          (params.get(Symbols.NewName), params.get(Symbols.File), params.get(Symbols.Start),
+            params.get(Symbols.End)) match {
               case (Some(n: String), Some(f: String), Some(s: Int), Some(e: Int)) => {
                 val file = CanonFile(f)
                 reloadAndType(file)
@@ -276,9 +273,9 @@ trait RefactoringImpl { self: RichPresentationCompiler =>
               case _ => badArgs
             }
         }
-        case S.ExtractMethod => {
-          (params.get(S.MethodName), params.get(S.File), params.get(S.Start),
-            params.get(S.End)) match {
+        case Symbols.ExtractMethod => {
+          (params.get(Symbols.MethodName), params.get(Symbols.File), params.get(Symbols.Start),
+            params.get(Symbols.End)) match {
               case (Some(n: String), Some(f: String), Some(s: Int), Some(e: Int)) => {
                 val file = CanonFile(f)
                 reloadAndType(file)
@@ -287,9 +284,9 @@ trait RefactoringImpl { self: RichPresentationCompiler =>
               case _ => badArgs
             }
         }
-        case S.ExtractLocal => {
-          (params.get(S.Name), params.get(S.File), params.get(S.Start),
-            params.get(S.End)) match {
+        case Symbols.ExtractLocal => {
+          (params.get(Symbols.Name), params.get(Symbols.File), params.get(Symbols.Start),
+            params.get(Symbols.End)) match {
               case (Some(n: String), Some(f: String), Some(s: Int), Some(e: Int)) => {
                 val file = CanonFile(f)
                 reloadAndType(file)
@@ -298,8 +295,8 @@ trait RefactoringImpl { self: RichPresentationCompiler =>
               case _ => badArgs
             }
         }
-        case S.InlineLocal => {
-          (params.get(S.File), params.get(S.Start), params.get(S.End)) match {
+        case Symbols.InlineLocal => {
+          (params.get(Symbols.File), params.get(Symbols.Start), params.get(Symbols.End)) match {
             case (Some(f: String), Some(s: Int), Some(e: Int)) => {
               val file = CanonFile(f)
               reloadAndType(file)
@@ -308,8 +305,8 @@ trait RefactoringImpl { self: RichPresentationCompiler =>
             case _ => badArgs
           }
         }
-        case S.OrganizeImports => {
-          params.get(S.File) match {
+        case Symbols.OrganizeImports => {
+          params.get(Symbols.File) match {
             case Some(f: String) => {
               val file = CanonFile(f)
               reloadAndType(file)
@@ -318,8 +315,8 @@ trait RefactoringImpl { self: RichPresentationCompiler =>
             case _ => badArgs
           }
         }
-        case S.AddImport => {
-          (params.get(S.QualifiedName), params.get(S.File)) match {
+        case Symbols.AddImport => {
+          (params.get(Symbols.QualifiedName), params.get(Symbols.File)) match {
               case (Some(n: String), Some(f: String)) => {
                 val file = CanonFile(f)
                 reloadAndType(file)

@@ -28,7 +28,7 @@
 package org.ensime.server
 import java.io.File
 import org.ensime.config.ProjectConfig
-import org.ensime.protocol.ProtocolConversions
+import org.ensime.protocol.Protocol
 import org.ensime.protocol.ProtocolConst._
 import org.ensime.util._
 import scala.actors._
@@ -52,7 +52,7 @@ case class AddSourceFilesReq(files: Iterable[File])
 case class RemoveSourceFilesReq(files: Iterable[File])
 case class UpdateSourceFilesReq(files: Iterable[File])
 
-class IncrementalBuilder(project: Project, protocol: ProtocolConversions, config: ProjectConfig) extends Actor {
+class IncrementalBuilder(project: Project, protocol: Protocol, config: ProjectConfig) extends Actor {
 
   class IncrementalBuildManager(settings: Settings, reporter: Reporter) extends RefinedBuildManager(settings) {
 

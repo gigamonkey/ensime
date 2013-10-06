@@ -1,7 +1,7 @@
 /**
 *  Copyright (c) 2010, Aemon Cannon
 *  All rights reserved.
-*  
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions are met:
 *      * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
 *      * Neither the name of ENSIME nor the
 *        names of its contributors may be used to endorse or promote products
 *        derived from this software without specific prior written permission.
-*  
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,9 +25,35 @@
 *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-package org.ensime.util
+package org.ensime.server
 
-trait WireFormat{
-  def toWireString:String
+/*
+ * https://issues.scala-lang.org/browse/SI-4601
+ */
+
+object Symbols {
+
+  val Method          = 'method
+  val Trait           = 'trait
+  val Interface       = 'interface
+  val Object          = 'object
+  val Class           = 'class
+  val Field           = 'field
+  val Nil             = 'nil
+
+  val Rename          = 'rename
+  val ExtractMethod   = 'extractMethod
+  val ExtractLocal    = 'extractLocal
+  val InlineLocal     = 'inlineLocal
+  val OrganizeImports = 'organizeImports
+  val AddImport       = 'addImport
+
+  val QualifiedName   = 'qualifiedName
+  val File            = 'file
+  val NewName         = 'newName
+  val Name            = 'name
+  val Start           = 'start
+  val End             = 'end
+  val MethodName      = 'methodName
+
 }
-

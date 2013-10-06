@@ -26,9 +26,13 @@
 */
 
 package org.ensime.util
+
 import scala.collection.immutable.Map
 import scala.util.parsing.combinator._
 import scala.util.parsing.input
+
+// temporary
+import org.ensime.protocol.WireFormat
 
 abstract class SExp extends WireFormat {
   def toReadableString: String = toString
@@ -60,7 +64,7 @@ case class SExpList(items: Iterable[SExp]) extends SExp with Iterable[SExp] {
   def toSymbolMap(): Map[scala.Symbol, Any] = {
     var m = Map[scala.Symbol, Any]()
     items.sliding(2, 2).foreach {
-      case SymbolAtom(key) ::(sexp: SExp) :: rest => {
+      case SymbolAtom(key) :: (sexp: SExp) :: rest => {
         m += (Symbol(key) -> sexp.toScala)
       }
       case _ => {}

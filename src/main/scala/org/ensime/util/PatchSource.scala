@@ -26,7 +26,8 @@
  */
 
 package org.ensime.util
-import scala.tools.nsc.util.{ SourceFile, BatchSourceFile }
+//import scala.tools.nsc.util.{ SourceFile, BatchSourceFile }
+import scala.reflect.internal.util.{ SourceFile, BatchSourceFile }
 import org.ensime.model.PatchOp
 import org.ensime.model.PatchInsert
 import org.ensime.model.PatchDelete
@@ -58,21 +59,21 @@ object PatchSource {
       val i = op.start
       val copyLen = i - srcCursor
       System.arraycopy(input, srcCursor, result,
-	srcCursor + offset, copyLen)
+        srcCursor + offset, copyLen)
       srcCursor += copyLen
       op match {
         case PatchInsert(i, text) => {
-	  text.getChars(0, text.length, result, i + offset)
+          text.getChars(0, text.length, result, i + offset)
           offset += text.length
         }
         case PatchReplace(i, j, text) => {
-	  text.getChars(0, text.length, result, i + offset)
+          text.getChars(0, text.length, result, i + offset)
           offset += text.length - (j - i)
-	  srcCursor += j - i
+          srcCursor += j - i
         }
         case PatchDelete(i, j) => {
           offset -= j - i
-	  srcCursor += j - i
+          srcCursor += j - i
         }
       }
     }
@@ -108,18 +109,18 @@ object PatchSource {
       applyOperations("abc", List(PatchDelete(0, 1))) == "bc")
     assert(
       applyOperations("abc", List(
-	  PatchDelete(0, 1),
-	  PatchInsert(1, "z"),
-	  PatchDelete(2, 3))) == "zb")
+          PatchDelete(0, 1),
+          PatchInsert(1, "z"),
+          PatchDelete(2, 3))) == "zb")
     assert(
       applyOperations("hello there", List(PatchReplace(0, 6, ""))) == "there")
     assert(
       applyOperations("hello there", List(PatchInsert(0, "zz"))) == "zzhello there")
     assert(applyOperations("", List(PatchInsert(0, "moose"))) == "moose")
     assert(applyOperations("abcde", List(
-	  PatchReplace(0, 3, "z"),
-	  PatchReplace(3, 5, "q")
-	)) == "zq")
+          PatchReplace(0, 3, "z"),
+          PatchReplace(3, 5, "q")
+        )) == "zq")
     assert(
       applyOperations("", List(PatchInsert(0, "darling!\n"))) == "darling!\n")
     assert(

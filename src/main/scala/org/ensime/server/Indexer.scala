@@ -34,7 +34,7 @@ import org.ensime.indexer.LuceneIndex
 import org.objectweb.asm.ClassReader
 import org.ensime.model.{ImportSuggestions, MethodSearchResult, SymbolSearchResult, SymbolSearchResults, TypeInfo, TypeSearchResult}
 import org.ensime.protocol.ProtocolConst._
-import org.ensime.protocol.ProtocolConversions
+import org.ensime.protocol.Protocol
 import org.ensime.util._
 import scala.actors._
 import scala.actors.Actor._
@@ -54,12 +54,12 @@ case class CommitReq()
  */
 class Indexer(
   project: Project,
-  protocol: ProtocolConversions,
+  protocol: Protocol,
   config: ProjectConfig)
     extends Actor
 {
 
-  import protocol._
+  import protocol.toWF
 
   val index          = new LuceneIndex {}
   val classFileIndex = new ClassFileIndex(config)

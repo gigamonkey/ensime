@@ -36,7 +36,7 @@ import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import org.ensime.config.ProjectConfig
 import org.ensime.model._
-import org.ensime.protocol.ProtocolConversions
+import org.ensime.protocol.Protocol
 import org.ensime.protocol.ProtocolConst._
 import org.ensime.util._
 import scala.actors._
@@ -87,7 +87,7 @@ case class DebugOutputEvent(out: String) extends DebugEvent
 
 class DebugManager(project: Project,
   indexer: Actor,
-  protocol: ProtocolConversions,
+  protocol: Protocol,
   config: ProjectConfig) extends Actor
 {
   import protocol._

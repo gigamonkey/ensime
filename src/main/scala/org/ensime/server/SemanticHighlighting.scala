@@ -26,12 +26,13 @@
 */
 
 package org.ensime.server
-import org.ensime.model.{ Helpers, SymbolDesignation, SymbolDesignations }
+
+import org.ensime.model.{ SymbolDesignation, SymbolDesignations }
 import scala.collection.mutable.ListBuffer
-import scala.tools.nsc.interactive.{ CompilerControl, Global }
-import scala.tools.nsc.util.RangePosition
-import scala.tools.nsc.symtab.Flags._
 import scala.math
+import scala.tools.nsc.interactive.{ CompilerControl, Global }
+import scala.tools.nsc.symtab.Flags._
+import scala.reflect.internal.util.RangePosition
 
 trait SemanticHighlighting { self: Global with Helpers =>
 
@@ -55,7 +56,7 @@ trait SemanticHighlighting { self: Global with Helpers =>
       }
 
       if (!treeP.isTransparent && p.overlaps(treeP)) {
-	try {
+        try {
           t match {
             case Import(expr, selectors) => {
               for (impSel <- selectors) {
@@ -204,36 +205,42 @@ trait SemanticHighlighting { self: Global with Helpers =>
             }
             case _ => {}
           }
-	}
-	catch{
-	  case e : Throwable => {
-	    System.err.println("Error in AST traverse:")
-	    e.printStackTrace(System.err);
-	  }
-	}
+        }
+        catch{
+          case e : Throwable => {
+            System.err.println("Error in AST traverse:")
+            e.printStackTrace(System.err);
+          }
+        }
         super.traverse(t)
       }
     }
   }
 
   protected def symbolDesignationsInRegion(p: RangePosition,
-    tpes: List[scala.Symbol]): SymbolDesignations = {
+    tpes: List[scala.Symbol]):
+      SymbolDesignations =
+  {
     val tpeSet = Set[scala.Symbol]() ++ tpes
     val typed: Response[Tree] = new Response[Tree]
-    askType(p.source, false, typed)
+
+    //was this but compiler says deprecated. Assume I've got the equivalent.
+    //askType(p.source, false, typed)
+    askLoadedTyped(p.source, typed)
+
     typed.get.left.toOption match {
       case Some(tree) => {
 
-	// TODO: Disable designations for
-	// regions with errors?
+        // TODO: Disable designations for
+        // regions with errors?
 
         //        val cu = unitOf(p.source)
         //        var startOfProblems = p.end
         //        for (prob <- cu.problems) {
-        //	  if(prob.severityLevel >= 2){
+        //        if(prob.severityLevel >= 2){
         //            startOfProblems = math.min(
         //              prob.pos.start, startOfProblems)
-        //	  }
+        //        }
         //        }
 
         val traverser = new SymDesigsTraverser(p, tpeSet)

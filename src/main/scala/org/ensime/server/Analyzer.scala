@@ -31,7 +31,7 @@ import org.ensime.config.ProjectConfig
 import org.ensime.model.SymbolDesignations
 import org.ensime.model.PatchOp
 import org.ensime.model.OffsetRange
-import org.ensime.protocol.ProtocolConversions
+import org.ensime.protocol.Protocol
 import org.ensime.protocol.ProtocolConst._
 import org.ensime.util._
 import org.ensime.util.RichFile._
@@ -50,7 +50,7 @@ case class CompilerFatalError(e: Throwable)
 class Analyzer(
   val project: Project,
   val indexer: Actor,
-  val protocol: ProtocolConversions,
+  val protocol: Protocol,
   val config: ProjectConfig)
   extends Actor with RefactoringHandler
 {
@@ -62,7 +62,8 @@ class Analyzer(
 
   println("\nPresentation Compiler settings:")
   println(settings.toString)
-  import protocol._
+
+  import protocol.{toWF, nullToWF}
 
   private val reportHandler = new ReportHandler {
     override def messageUser(str: String) {
@@ -227,7 +228,7 @@ class Analyzer(
                     val p = pos(file, range)
                     val result = scalaCompiler.askInspectTypeAt(p) match {
                       case Some(info) => toWF(info)
-                      case None => toWF(null)
+                      case None => nullToWF()
                     }
                     project ! RPCResultEvent(result, callId)
                   }
@@ -235,7 +236,7 @@ class Analyzer(
                   case InspectTypeByIdReq(id: Int) => {
                     val result = scalaCompiler.askInspectTypeById(id) match {
                       case Some(info) => toWF(info)
-                      case None => toWF(null)
+                      case None => nullToWF()
                     }
                     project ! RPCResultEvent(result, callId)
                   }
@@ -244,7 +245,7 @@ class Analyzer(
                     val p = pos(file, point)
                     val result = scalaCompiler.askSymbolInfoAt(p) match {
                       case Some(info) => toWF(info)
-                      case None => toWF(null)
+                      case None => nullToWF()
                     }
                     project ! RPCResultEvent(result, callId)
                   }
@@ -252,7 +253,7 @@ class Analyzer(
                   case InspectPackageByPathReq(path: String) => {
                     val result = scalaCompiler.askPackageByPath(path) match {
                       case Some(info) => toWF(info)
-                      case None => toWF(null)
+                      case None => nullToWF()
                     }
                     project ! RPCResultEvent(result, callId)
                   }
@@ -261,7 +262,7 @@ class Analyzer(
                     val p = pos(file, range)
                     val result = scalaCompiler.askTypeInfoAt(p) match {
                       case Some(info) => toWF(info)
-                      case None => toWF(null)
+                      case None => nullToWF()
                     }
                     project ! RPCResultEvent(result, callId)
                   }
@@ -269,7 +270,7 @@ class Analyzer(
                   case TypeByIdReq(id: Int) => {
                     val result = scalaCompiler.askTypeInfoById(id) match {
                       case Some(info) => toWF(info)
-                      case None => toWF(null)
+                      case None => nullToWF()
                     }
                     project ! RPCResultEvent(result, callId)
                   }
@@ -277,7 +278,7 @@ class Analyzer(
                   case TypeByNameReq(name: String) => {
                     val result = scalaCompiler.askTypeInfoByName(name) match {
                       case Some(info) => toWF(info)
-                      case None => toWF(null)
+                      case None => nullToWF()
                     }
                     project ! RPCResultEvent(result, callId)
                   }
@@ -287,7 +288,7 @@ class Analyzer(
                     val p = pos(file, range)
                     val result = scalaCompiler.askTypeInfoByNameAt(name, p) match {
                       case Some(info) => toWF(info)
-                      case None => toWF(null)
+                      case None => nullToWF()
                     }
 
                     project ! RPCResultEvent(result, callId)
@@ -296,7 +297,7 @@ class Analyzer(
                   case CallCompletionReq(id: Int) => {
                     val result = scalaCompiler.askCallCompletionInfoById(id) match {
                       case Some(info) => toWF(info)
-                      case None => toWF(null)
+                      case None => nullToWF()
                     }
                     project ! RPCResultEvent(result, callId)
                   }
@@ -323,7 +324,7 @@ class Analyzer(
                 }
               }
             } catch {
-              case e => {
+              case e: Throwable => {
                 System.err.println("Error handling RPC: " + e + " :\n" +
                   e.getStackTraceString)
                 project.sendRPCError(ErrExceptionInAnalyzer,

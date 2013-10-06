@@ -1,29 +1,29 @@
 /**
-*  Copyright (c) 2010, Aemon Cannon
-*  All rights reserved.
-*
-*  Redistribution and use in source and binary forms, with or without
-*  modification, are permitted provided that the following conditions are met:
-*      * Redistributions of source code must retain the above copyright
-*        notice, this list of conditions and the following disclaimer.
-*      * Redistributions in binary form must reproduce the above copyright
-*        notice, this list of conditions and the following disclaimer in the
-*        documentation and/or other materials provided with the distribution.
-*      * Neither the name of ENSIME nor the
-*        names of its contributors may be used to endorse or promote products
-*        derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-*  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-*  DISCLAIMED. IN NO EVENT SHALL Aemon Cannon BE LIABLE FOR ANY
-*  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-*  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-*  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-*  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ *  Copyright (c) 2010, Aemon Cannon
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *      * Redistributions in binary form must reproduce the above copyright
+ *        notice, this list of conditions and the following disclaimer in the
+ *        documentation and/or other materials provided with the distribution.
+ *      * Neither the name of ENSIME nor the
+ *        names of its contributors may be used to endorse or promote products
+ *        derived from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *  DISCLAIMED. IN NO EVENT SHALL Aemon Cannon BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ *  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ *  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 package org.ensime.protocol
 
@@ -38,6 +38,11 @@ import scala.tools.nsc.util.{Position, RangePosition}
 
 case class IncomingMessageEvent(obj: Any)
 case class OutgoingMessageEvent(obj: Any)
+case class FileRange(file: String, start: Int, end: Int)
+
+trait WireFormat {
+  def toWireString: String
+}
 
 object ProtocolConst {
 
@@ -69,7 +74,7 @@ object ProtocolConst {
 
 }
 
-trait Protocol extends ProtocolConversions {
+trait Protocol {
 
   /**
    * Read a message from the socket.
@@ -178,65 +183,68 @@ trait Protocol extends ProtocolConversions {
    */
   def sendProtocolError(code: Int, detail: Option[String])
 
+  def nullToWF(): WireFormat                            // Analyzer
+  def toWF(evt: AnalyzerReadyEvent): WireFormat         // Analyzer
+  def toWF(evt: ClearAllNotesEvent): WireFormat         // Analyzer
+  def toWF(evt: FullTypeCheckCompleteEvent): WireFormat // Analyzer
+  def toWF(evt: NewNotesEvent): WireFormat              // Analyzer
+  def toWF(evt: SendBackgroundMessageEvent): WireFormat // Analyzer
+  def toWF(value: CallCompletionInfo): WireFormat       // Analyzer
+  def toWF(value: CompletionInfo): WireFormat           // Analyzer
+  def toWF(value: CompletionInfoList): WireFormat       // Analyzer
+  def toWF(value: PackageInfo): WireFormat              // Analyzer
+  def toWF(value: RangePosition): WireFormat            // Analyzer
+  def toWF(value: SymbolDesignations): WireFormat       // Analyzer
+  def toWF(value: SymbolInfo): WireFormat               // Analyzer
+  def toWF(value: TypeInfo): WireFormat                 // Analyzer
+  def toWF(value: TypeInspectInfo): WireFormat          // Analyzer
 
-}
+  def toWF(config: BreakpointList): WireFormat          // DebugManager
+  def toWF(evt: DebugBacktrace): WireFormat             // DebugManager
+  def toWF(evt: DebugEvent): WireFormat                 // DebugManager
+  def toWF(obj: DebugLocation): WireFormat              // DebugManager
+  def toWF(obj: DebugValue): WireFormat                 // DebugManager
+  def toWF(value: String): WireFormat                   // DebugManager
+  def toWF(vmStatus: DebugVmStatus): WireFormat         // DebugManager
 
-trait ProtocolConversions {
-  def toWF(evt: SendBackgroundMessageEvent): WireFormat
-  def toWF(evt: AnalyzerReadyEvent): WireFormat
-  def toWF(evt: FullTypeCheckCompleteEvent): WireFormat
-  def toWF(evt: IndexerReadyEvent): WireFormat
-  def toWF(evt: NewNotesEvent): WireFormat
-  def toWF(evt: ClearAllNotesEvent): WireFormat
-  def toWF(evt: DebugEvent): WireFormat
+  def toWF(value: Note): WireFormat                     // IncrementalBuilder
+  def toWF(values: Iterable[WireFormat]): WireFormat    // IncrementalBuilder
 
-  def toWF(obj: DebugLocation): WireFormat
-  def toWF(obj: DebugValue): WireFormat
-  def toWF(evt: DebugNullValue): WireFormat
-  def toWF(evt: DebugPrimitiveValue): WireFormat
-  def toWF(evt: DebugClassField): WireFormat
-  def toWF(obj: DebugStringInstance): WireFormat
-  def toWF(evt: DebugObjectInstance): WireFormat
-  def toWF(evt: DebugArrayInstance): WireFormat
-  def toWF(evt: DebugStackLocal): WireFormat
-  def toWF(evt: DebugStackFrame): WireFormat
-  def toWF(evt: DebugBacktrace): WireFormat
+  def toWF(evt: IndexerReadyEvent): WireFormat          // Indexer
+  def toWF(method: MethodBytecode): WireFormat          // Indexer
+  def toWF(value: ImportSuggestions): WireFormat        // Indexer
+  def toWF(value: SymbolSearchResults): WireFormat      // Indexer
 
-  def toWF(pos: SourcePosition): WireFormat
-  def toWF(config: BreakpointList): WireFormat
-  def toWF(config: ProjectConfig): WireFormat
-  def toWF(config: ReplConfig): WireFormat
-  def toWF(value: Boolean): WireFormat
-  def toWF(value: String): WireFormat
-  def toWF(value: Note): WireFormat
-  def toWF(notelist: NoteList): WireFormat;
-  def toWF(values: Iterable[WireFormat]): WireFormat
-  def toWF(value: CompletionInfo): WireFormat
-  def toWF(value: CompletionInfoList): WireFormat
-  def toWF(value: PackageMemberInfoLight): WireFormat
-  def toWF(value: SymbolInfo): WireFormat
-  def toWF(value: NamedTypeMemberInfoLight): WireFormat
-  def toWF(value: NamedTypeMemberInfo): WireFormat
-  def toWF(value: EntityInfo): WireFormat
-  def toWF(value: TypeInfo): WireFormat
-  def toWF(value: PackageInfo): WireFormat
-  def toWF(value: CallCompletionInfo): WireFormat
-  def toWF(value: InterfaceInfo): WireFormat
-  def toWF(value: TypeInspectInfo): WireFormat
-  def toWF(value: SymbolSearchResults): WireFormat
-  def toWF(value: ImportSuggestions): WireFormat
-  def toWF(value: SymbolSearchResult): WireFormat
-  def toWF(value: Position): WireFormat
-  def toWF(value: RangePosition): WireFormat
-  def toWF(value: FileRange): WireFormat
-  def toWF(value: SymbolDesignations): WireFormat
+  def toWF(value: Boolean): WireFormat                  // RPCResultEvent
 
-  def toWF(value: RefactorFailure): WireFormat
-  def toWF(value: RefactorEffect): WireFormat
-  def toWF(value: RefactorResult): WireFormat
-  def toWF(value: Undo): WireFormat
-  def toWF(value: UndoResult): WireFormat
-  def toWF(value: Null): WireFormat
-  def toWF(vmStatus: DebugVmStatus): WireFormat
-  def toWF(method: MethodBytecode): WireFormat
+  def toWF(config: ProjectConfig): WireFormat           // RPCTarget
+  def toWF(config: ReplConfig): WireFormat              // RPCTarget
+  def toWF(value: FileRange): WireFormat                // RPCTarget
+  def toWF(value: Undo): WireFormat                     // RPCTarget
+  def toWF(value: UndoResult): WireFormat               // RPCTarget
+
+  def toWF(value: RefactorEffect): WireFormat           // Refactoring
+  def toWF(value: RefactorFailure): WireFormat          // Refactoring
+  def toWF(value: RefactorResult): WireFormat           // Refactoring
+
+  // These don't seem to be used.
+
+  //  def toWF(evt: DebugArrayInstance): WireFormat
+  //  def toWF(evt: DebugClassField): WireFormat
+  //  def toWF(evt: DebugNullValue): WireFormat
+  //  def toWF(evt: DebugObjectInstance): WireFormat
+  //  def toWF(evt: DebugPrimitiveValue): WireFormat
+  //  def toWF(evt: DebugStackFrame): WireFormat
+  //  def toWF(evt: DebugStackLocal): WireFormat
+  //  def toWF(notelist: NoteList): WireFormat;
+  //  def toWF(obj: DebugStringInstance): WireFormat
+  //  def toWF(pos: SourcePosition): WireFormat
+  //  def toWF(value: EntityInfo): WireFormat
+  //  def toWF(value: InterfaceInfo): WireFormat
+  //  def toWF(value: NamedTypeMemberInfo): WireFormat
+  //  def toWF(value: NamedTypeMemberInfoLight): WireFormat
+  //  def toWF(value: PackageMemberInfoLight): WireFormat
+  //  def toWF(value: Position): WireFormat
+  //  def toWF(value: SymbolSearchResult): WireFormat
+
 }

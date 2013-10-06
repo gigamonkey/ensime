@@ -26,6 +26,7 @@
  */
 
 package org.ensime.debug
+
 import org.ensime.util._
 import org.ensime.util.RichFile._
 import org.ensime.util.FileUtils._
@@ -124,6 +125,4 @@ object DebugInfo {
       fs.close()
     }
   }
-
 }
-

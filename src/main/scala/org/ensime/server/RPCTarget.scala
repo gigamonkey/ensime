@@ -31,6 +31,7 @@ import java.io.File
 import org.ensime.config.ProjectConfig
 import org.ensime.model._
 import org.ensime.protocol.ProtocolConst._
+import org.ensime.protocol.FileRange
 import org.ensime.util._
 import scala.actors._
 import scala.actors.Actor._

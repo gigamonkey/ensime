@@ -25,7 +25,9 @@
 *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-package org.ensime.model
+package org.ensime.server
+
+import org.ensime.model.CompletionSignature
 import scala.tools.nsc.interactive.{CompilerControl, Global}
 
 trait Helpers { self: Global =>
@@ -225,29 +227,19 @@ trait Helpers { self: Global =>
   import scala.tools.nsc.symtab.Flags._
 
   def declaredAs(sym: Symbol): scala.Symbol = {
-    import org.ensime.util.{ Symbols => S }
-    if (sym.isMethod)
-    S.Method
-    else if (sym.isTrait)
-    S.Trait
-    else if (sym.isTrait && sym.hasFlag(JAVA))
-    S.Interface
-    else if (sym.isInterface)
-    S.Interface
-    else if (sym.isModule)
-    S.Object
-    else if (sym.isModuleClass)
-    S.Object
-    else if (sym.isClass)
-    S.Class
-    else if (sym.isPackageClass)
-    S.Class
 
+    if (sym.isMethod)                          Symbols.Method
+    else if (sym.isTrait)                      Symbols.Trait
+    else if (sym.isTrait && sym.hasFlag(JAVA)) Symbols.Interface
+    else if (sym.isInterface)                  Symbols.Interface
+    else if (sym.isModule)                     Symbols.Object
+    else if (sym.isModuleClass)                Symbols.Object
+    else if (sym.isClass)                      Symbols.Class
+    else if (sym.isPackageClass)               Symbols.Class
     // check this last so objects are not
     // classified as fields
-    else if (sym.isValue || sym.isVariable)
-    S.Field
-    else S.Nil
+    else if (sym.isValue || sym.isVariable)    Symbols.Field
+    else                                       Symbols.Nil
   }
 
   private def symbolSummary(sym: Symbol): Map[String, Any] = {

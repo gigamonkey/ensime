@@ -30,6 +30,7 @@
  */
 
 package org.ensime.util
+
 import scala.collection.mutable.{ Set => MutableSet }
 import scala.collection.mutable.{ HashMap, HashSet }
 import org.objectweb.asm.FieldVisitor
