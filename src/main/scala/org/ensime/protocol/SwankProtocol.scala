@@ -145,7 +145,7 @@ trait SwankProtocol extends Protocol {
       //TODO allocating a new array each time is inefficient!
       val buf = new Array[Char](msglen)
       fillArray(reader, buf)
-      SExp.read(new input.CharArrayReader(buf))
+      SwankWireFormat(SExp.read(new input.CharArrayReader(buf)))
     } else {
       throw new IllegalStateException("Empty message read from socket!")
     }
@@ -2007,10 +2007,10 @@ trait SwankProtocol extends Protocol {
     value match {
       case sexp: SExp =>
         {
-          sendMessage(SExp(
+          sendMessage(SwankWireFormat(SExp(
             key(":return"),
             SExp(key(":ok"), sexp),
-            callId))
+            callId)))
         }
       case _ => throw new IllegalStateException("Not a SExp: " + value)
     }
@@ -2018,26 +2018,26 @@ trait SwankProtocol extends Protocol {
 
   def sendEvent(value: WireFormat) {
     value match {
-      case sexp: SExp => { sendMessage(sexp) }
+      case sexp: SExp => { sendMessage(SwankWireFormat(sexp)) }
       case _ => throw new IllegalStateException("Not a SExp: " + value)
     }
   }
 
   def sendRPCError(code: Int, detail: Option[String], callId: Int) {
-    sendMessage(SExp(
+    sendMessage(SwankWireFormat(SExp(
       key(":return"),
       SExp(key(":abort"),
         code,
         detail.map(strToSExp).getOrElse(NilAtom())),
-      callId))
+      callId)))
   }
 
   def sendProtocolError(code: Int, detail: Option[String]) {
     sendMessage(
-      SExp(
+      SwankWireFormat(SExp(
         key(":reader-error"),
         code,
-        detail.map(strToSExp).getOrElse(NilAtom())))
+        detail.map(strToSExp).getOrElse(NilAtom()))))
   }
 
   object SExpConversion {

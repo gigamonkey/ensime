@@ -227,7 +227,8 @@ trait Protocol {
   def toWF(value: RefactorFailure): WireFormat          // Refactoring
   def toWF(value: RefactorResult): WireFormat           // Refactoring
 
-  // These don't seem to be used.
+  // These don't seem to be used. In many cases because they are
+  // probably subclasses of one of the types handled above.
 
   //  def toWF(evt: DebugArrayInstance): WireFormat
   //  def toWF(evt: DebugClassField): WireFormat
