@@ -65,19 +65,18 @@
  */
 
 package org.ensime.server
+
 import java.io.File
 import org.ensime.config.ProjectConfig
 import org.ensime.model._
 import scala.actors.Actor._
 import scala.actors.Actor
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
-import scala.tools.nsc.interactive.{ FreshRunReq, CompilerControl, Global, MissingResponse }
-import scala.tools.nsc.util._
+import scala.tools.nsc.Settings
+import scala.tools.nsc.interactive.{CompilerControl, FreshRunReq, Global, MissingResponse}
 import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.reporters.Reporter
-import scala.tools.nsc.util.{ Position, RangePosition, SourceFile }
-import scala.tools.nsc.Settings
+import scala.tools.nsc.util._
 import scala.tools.refactoring.analysis.GlobalIndexes
 
 trait RichCompilerControl extends CompilerControl with RefactoringControl with CompletionControl {

@@ -159,16 +159,15 @@ trait CompletionControl {
     }).take(maxResults))
   }
 
-  private val ident = "[a-zA-Z0-9_]"
+  private val ident    = "[a-zA-Z0-9_]"
   private val nonIdent = "[^a-zA-Z0-9_]"
-  private val ws = "[ \n\r\t]"
-  private val packRE = ("^.*?(?:package|import)[ ]+((?:[a-z0-9]+\\.)*)(?:(" + ident + "*)|\\{.*?(" + ident + "*))$").r
+  private val ws       = "[ \n\r\t]"
+  private val packRE   = ("^.*?(?:package|import)[ ]+((?:[a-z0-9]+\\.)*)(?:(" + ident + "*)|\\{.*?(" + ident + "*))$").r
 
   trait CompletionContext {}
   case class PackageContext(path: String, prefix: String) extends CompletionContext
   case class SymbolContext(p: Position, prefix: String, constructing: Boolean) extends CompletionContext
   case class MemberContext(p: Position, prefix: String, constructing: Boolean) extends CompletionContext
-
 
   def packageContext(preceding: String): Option[PackageContext] = {
     if (packRE.findFirstMatchIn(preceding).isDefined) {

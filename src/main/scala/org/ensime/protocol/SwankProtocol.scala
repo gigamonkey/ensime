@@ -2114,104 +2114,103 @@ trait SwankProtocol extends Protocol {
     obj match {
 
       case obj: DebugObjectReference =>
-        SExp(
-          key(":type"), 'reference,
-          key(":object-id"), obj.objectId.toString)
+        SExp.propList(
+          ":type"      -> 'reference,
+          ":object-id" -> obj.objectId.toString)
 
       case obj: DebugArrayElement =>
-        SExp(
-          key(":type"), 'element,
-          key(":object-id"), obj.objectId.toString,
-          key(":index"), obj.index)
+        SExp.propList(
+          ":type"      -> 'element,
+          ":object-id" -> obj.objectId.toString,
+          ":index"     -> obj.index)
 
       case obj: DebugObjectField =>
-        SExp(
-          key(":type"), 'field,
-          key(":object-id"), obj.objectId.toString,
-          key(":field"), obj.name)
+        SExp.propList(
+          ":type"      -> 'field,
+          ":object-id" -> obj.objectId.toString,
+          ":field"     -> obj.name)
 
       case obj: DebugStackSlot =>
-        SExp(
-          key(":type"), 'slot,
-          key(":thread-id"), obj.threadId.toString,
-          key(":frame"), obj.frame,
-          key(":offset"), obj.offset)
+        SExp.propList(
+          ":type"      -> 'slot,
+          ":thread-id" -> obj.threadId.toString,
+          ":frame"     -> obj.frame,
+          ":offset"    -> obj.offset)
 
       case obj: DebugNullValue =>
-        SExp(
-          key(":val-type"), 'null,
-          key(":type-name"), obj.typeName)
+        SExp.propList(
+          ":val-type"  -> 'null,
+          ":type-name" -> obj.typeName)
 
       case obj: DebugPrimitiveValue =>
-        SExp(
-          key(":val-type"), 'prim,
-          key(":summary"), obj.summary,
-          key(":type-name"), obj.typeName)
+        SExp.propList(
+          ":val-type"  -> 'prim,
+          ":summary"   -> obj.summary,
+          ":type-name" -> obj.typeName)
 
       case obj: DebugClassField =>
-        SExp(
-          key(":index"), obj.index,
-          key(":name"), obj.name,
-          key(":summary"), obj.summary,
-          key(":type-name"), obj.typeName)
+        SExp.propList(
+          ":index" -> obj.index,
+          ":name" -> obj.name,
+          ":summary" -> obj.summary,
+          ":type-name" -> obj.typeName)
 
       case obj: DebugObjectInstance =>
-        SExp(
-          key(":val-type"), 'obj,
-          key(":fields"), SExpList(obj.fields.map(toSexp)),
-          key(":type-name"), obj.typeName,
-          key(":object-id"), obj.objectId.toString)
+        SExp.propList(
+          ":val-type" -> 'obj,
+          ":fields" -> SExpList(obj.fields.map(toSexp)),
+          ":type-name" -> obj.typeName,
+          ":object-id" -> obj.objectId.toString)
 
       case obj: DebugStringInstance =>
-        SExp(
-          key(":val-type"), 'str,
-          key(":summary"), obj.summary,
-          key(":fields"), SExpList(obj.fields.map(toSexp)),
-          key(":type-name"), obj.typeName,
-          key(":object-id"), obj.objectId.toString)
+        SExp.propList(
+          ":val-type" -> 'str,
+          ":summary" -> obj.summary,
+          ":fields" -> SExpList(obj.fields.map(toSexp)),
+          ":type-name" -> obj.typeName,
+          ":object-id" -> obj.objectId.toString)
 
       case obj: DebugArrayInstance =>
-        SExp(
-          key(":val-type"), 'arr,
-          key(":length"), obj.length,
-          key(":type-name"), obj.typeName,
-          key(":element-type-name"), obj.elementTypeName,
-          key(":object-id"), obj.objectId.toString)
+        SExp.propList(
+          ":val-type" -> 'arr,
+          ":length" -> obj.length,
+          ":type-name" -> obj.typeName,
+          ":element-type-name" -> obj.elementTypeName,
+          ":object-id" -> obj.objectId.toString)
 
       case obj: DebugStackLocal =>
-        SExp(
-          key(":index"), obj.index,
-          key(":name"), obj.name,
-          key(":summary"), obj.summary,
-          key(":type-name"), obj.typeName)
+        SExp.propList(
+          ":index" -> obj.index,
+          ":name" -> obj.name,
+          ":summary" -> obj.summary,
+          ":type-name" -> obj.typeName)
 
       case obj: DebugStackFrame =>
-        SExp(
-          key(":index"), obj.index,
-          key(":locals"), SExpList(obj.locals.map(toSexp)),
-          key(":num-args"), obj.numArguments,
-          key(":class-name"), obj.className,
-          key(":method-name"), obj.methodName,
-          key(":pc-location"), toSexp(obj.pcLocation),
-          key(":this-object-id"), obj.thisObjectId.toString)
+        SExp.propList(
+          ":index"          -> obj.index,
+          ":locals"         -> SExpList(obj.locals.map(toSexp)),
+          ":num-args"       -> obj.numArguments,
+          ":class-name"     -> obj.className,
+          ":method-name"    -> obj.methodName,
+          ":pc-location"    -> toSexp(obj.pcLocation),
+          ":this-object-id" -> obj.thisObjectId.toString)
 
       case obj: DebugBacktrace =>
-        SExp(
-          key(":frames"), SExpList(obj.frames.map(toSexp)),
-          key(":thread-id"), obj.threadId.toString,
-          key(":thread-name"), obj.threadName)
+        SExp.propList(
+          ":frames"      -> SExpList(obj.frames.map(toSexp)),
+          ":thread-id"   -> obj.threadId.toString,
+          ":thread-name" -> obj.threadName)
 
       case pos: SourcePosition =>
-        SExp(
-          key(":file"), pos.file.getAbsolutePath(),
-          key(":line"), pos.line)
+        SExp.propList(
+          ":file" -> pos.file.getAbsolutePath(),
+          ":line" -> pos.line)
 
       case info: ConnectionInfo =>
-        SExp(
-          key(":pid"), 'nil,
-          key(":implementation"),
-          SExp(key(":name"), info.serverName),
-          key(":version"), info.protocolVersion)
+        SExp.propList(
+          ":pid"            -> 'nil,
+          ":implementation" -> SExp(key(":name"), info.serverName),
+          ":version"        -> info.protocolVersion)
 
       case evt: SendBackgroundMessageEvent =>
         SExp(key(":background-message"), evt.code,
@@ -2236,40 +2235,43 @@ trait SwankProtocol extends Protocol {
 
       case DebugOutputEvent(out: String) =>
         SExp(key(":debug-event"),
-          SExp(key(":type"), 'output,
-            key(":body"), out))
+          SExp.propList(
+            ":type" -> 'output,
+            ":body" -> out))
 
       case DebugStepEvent(threadId, threadName, pos) => {
         SExp(key(":debug-event"),
-          SExp(key(":type"), 'step,
-            key(":thread-id"), threadId.toString,
-            key(":thread-name"), threadName,
-            key(":file"), pos.file.getAbsolutePath,
-            key(":line"), pos.line))
+          SExp.propList(
+            ":type"        -> 'step,
+            ":thread-id"   -> threadId.toString,
+            ":thread-name" -> threadName,
+            ":file"        -> pos.file.getAbsolutePath,
+            ":line"        -> pos.line))
       }
 
       case DebugBreakEvent(threadId, threadName, pos) => {
         SExp(key(":debug-event"),
-          SExp(key(":type"), 'breakpoint,
-            key(":thread-id"), threadId.toString,
-            key(":thread-name"), threadName,
-            key(":file"), pos.file.getAbsolutePath,
-            key(":line"), pos.line))
+          SExp.propList(
+            ":type"        -> 'breakpoint,
+            ":thread-id"   -> threadId.toString,
+            ":thread-name" -> threadName,
+            ":file"        -> pos.file.getAbsolutePath,
+            ":line"        -> pos.line))
       }
 
       case DebugVMDeathEvent() => {
         SExp(key(":debug-event"),
-          SExp(key(":type"), 'death))
+          SExp.propList(":type" -> 'death))
       }
 
       case DebugVMStartEvent() => {
         SExp(key(":debug-event"),
-          SExp(key(":type"), 'start))
+          SExp.propList(":type" -> 'start))
       }
 
       case DebugVMDisconnectEvent() => {
         SExp(key(":debug-event"),
-          SExp(key(":type"), 'disconnect))
+          SExp.propList(":type" -> 'disconnect))
       }
 
       case DebugExceptionEvent(excId, threadId, threadName, maybePos) => {
@@ -2288,39 +2290,41 @@ trait SwankProtocol extends Protocol {
 
       case DebugThreadStartEvent(threadId: Long) => {
         SExp(key(":debug-event"),
-          SExp(key(":type"), 'threadStart,
-            key(":thread-id"), threadId.toString))
+          SExp.propList(
+            ":type" -> 'threadStart,
+            ":thread-id" -> threadId.toString))
       }
 
       case DebugThreadDeathEvent(threadId: Long) => {
         SExp(key(":debug-event"),
-          SExp(key(":type"), 'threadDeath,
-            key(":thread-id"), threadId.toString))
+          SExp.propList(
+            ":type" -> 'threadDeath,
+            ":thread-id" -> threadId.toString))
       }
 
       case evt: DebugEvent =>
         SExp(key(":debug-event"))
 
       case bp: Breakpoint =>
-        SExp(
-          key(":file"), bp.pos.file.getAbsolutePath,
-          key(":line"), bp.pos.line)
+        SExp.propList(
+          ":file" -> bp.pos.file.getAbsolutePath,
+          ":line" -> bp.pos.line)
 
       case bps: BreakpointList =>
-        SExp(
-          key(":active"), SExpList(bps.active.map { toSexp(_) }),
-          key(":pending"), SExpList(bps.pending.map { toSexp(_) }))
+        SExp.propList(
+          ":active" -> SExpList(bps.active.map { toSexp(_) }),
+          ":pending" -> SExpList(bps.pending.map { toSexp(_) }))
 
       case config: ProjectConfig =>
-        SExp(
-          key(":project-name"), config.name.map(StringAtom).getOrElse('nil),
-          key(":source-roots"), SExp(
+        SExp.propList(
+          ":project-name" -> config.name.map(StringAtom).getOrElse('nil),
+          ":source-roots" -> SExp(
             (config.sourceRoots ++ config.referenceSourceRoots).map {
               f => StringAtom(f.getPath)
             }))
 
       case config: ReplConfig =>
-        SExp.propList((":classpath", strToSExp(config.classpath)))
+        SExp.propList(":classpath" -> strToSExp(config.classpath))
 
       case value: Boolean =>
         if (value) TruthAtom() else NilAtom()
@@ -2331,23 +2335,19 @@ trait SwankProtocol extends Protocol {
         StringAtom(value)
 
       case note: Note =>
-        SExp(
-          key(":severity"), note.friendlySeverity,
-          key(":msg"), note.msg,
-          key(":beg"), note.beg,
-          key(":end"), note.end,
-          key(":line"), note.line,
-          key(":col"), note.col,
-          key(":file"), note.file)
+        SExp.propList(
+          ":severity" -> note.friendlySeverity,
+          ":msg"      -> note.msg,
+          ":beg"      -> note.beg,
+          ":end"      -> note.end,
+          ":line"     -> note.line,
+          ":col"      -> note.col,
+          ":file"     -> note.file)
 
-      case notelist: NoteList => {
-        val NoteList(isFull, notes) = notelist
-        SExp(
-          key(":is-full"),
-          toSexp(isFull),
-          key(":notes"),
-          SExpList(notes.map(toSexp)))
-      }
+      case notelist: NoteList =>
+        SExp.propList(
+          ":is-full" -> toSexp(notelist.full),
+          ":notes" -> SExpList(notelist.notes.map(toSexp)))
 
       case values: Iterable[WireFormat] =>
         SExpList(values.map(ea => ea.asInstanceOf[SExp]))
@@ -2363,34 +2363,34 @@ trait SwankProtocol extends Protocol {
 
       case value: CompletionInfo =>
         SExp.propList(
-          (":name", value.name),
-          (":type-sig", toSexp(value.tpeSig)),
-          (":type-id", value.tpeId),
-          (":is-callable", value.isCallable),
-          (":to-insert", value.toInsert.map(strToSExp).getOrElse('nil)))
+          ":name"        -> value.name,
+          ":type-sig"    -> toSexp(value.tpeSig),
+          ":type-id"     -> value.tpeId,
+          ":is-callable" -> value.isCallable,
+          ":to-insert"   -> value.toInsert.map(strToSExp).getOrElse('nil))
 
       case value: CompletionInfoList =>
         SExp.propList(
-          (":prefix", value.prefix),
-          (":completions", SExpList(value.completions.map(toSexp))))
+          ":prefix" -> value.prefix,
+          ":completions" -> SExpList(value.completions.map(toSexp)))
 
       case value: PackageMemberInfoLight =>
-        SExp(key(":name"), value.name)
+        SExp.propList(":name" -> value.name)
 
       case value: SymbolInfo =>
         SExp.propList(
-          (":name", value.name),
-          (":local-name", value.localName),
-          (":type", toSexp(value.tpe)),
-          (":decl-pos", value.declPos),
-          (":is-callable", value.isCallable),
-          (":owner-type-id", value.ownerTypeId.map(intToSExp).getOrElse('nil)))
+          ":name"          -> value.name,
+          ":local-name"    -> value.localName,
+          ":type"          -> toSexp(value.tpe),
+          ":decl-pos"      -> value.declPos,
+          ":is-callable"   -> value.isCallable,
+          ":owner-type-id" -> value.ownerTypeId.map(intToSExp).getOrElse('nil))
 
       case value: FileRange =>
         SExp.propList(
-          (":file", value.file),
-          (":start", value.start),
-          (":end", value.end))
+          ":file"  -> value.file,
+          ":start" -> value.start,
+          ":end"   -> value.end)
 
       case value: Position =>
         posToSExp(value)
@@ -2400,87 +2400,85 @@ trait SwankProtocol extends Protocol {
 
       case value: NamedTypeMemberInfoLight =>
         SExp.propList(
-          (":name", value.name),
-          (":type-sig", value.tpeSig),
-          (":type-id", value.tpeId),
-          (":is-callable", value.isCallable))
+          ":name" -> value.name,
+          ":type-sig" -> value.tpeSig,
+          ":type-id" -> value.tpeId,
+          ":is-callable" -> value.isCallable)
 
       case value: NamedTypeMemberInfo =>
         SExp.propList(
-          (":name", value.name),
-          (":type", toSexp(value.tpe)),
-          (":pos", value.pos),
-          (":decl-as", value.declaredAs))
+          ":name" -> value.name,
+          ":type" -> toSexp(value.tpe),
+          ":pos" -> value.pos,
+          ":decl-as" -> value.declaredAs)
 
 
       case value: ArrowTypeInfo =>
-          SExp.propList(
-            (":name", value.name),
-            (":type-id", value.id),
-            (":arrow-type", true),
-            (":result-type", toSexp(value.resultType)),
-            (":param-sections", SExp(value.paramSections.map(toSexp))))
+        SExp.propList(
+          ":name"           -> value.name,
+          ":type-id"        -> value.id,
+          ":arrow-type"     -> true,
+          ":result-type"    -> toSexp(value.resultType),
+          ":param-sections" -> SExp(value.paramSections.map(toSexp)))
 
       case value: TypeInfo =>
-          SExp.propList((":name", value.name),
-            (":type-id", value.id),
-            (":full-name", value.fullName),
-            (":decl-as", value.declaredAs),
-            (":type-args", SExp(value.args.map(toSexp))),
-            (":members", SExp(value.members.map(toSexp))),
-            (":pos", value.pos),
-            (":outer-type-id", value.outerTypeId.map(intToSExp).getOrElse('nil)))
+        SExp.propList((":name", value.name),
+          ":type-id" -> value.id,
+          ":full-name" -> value.fullName,
+          ":decl-as" -> value.declaredAs,
+          ":type-args" -> SExp(value.args.map(toSexp)),
+          ":members" -> SExp(value.members.map(toSexp)),
+          ":pos" -> value.pos,
+          ":outer-type-id" -> value.outerTypeId.map(intToSExp).getOrElse('nil))
 
 
       case value: PackageInfo =>
         SExp.propList((":name", value.name),
-          (":info-type", 'package),
-          (":full-name", value.fullname),
-          (":members", SExpList(value.members.map(toSexp))))
+          ":info-type" -> 'package,
+          ":full-name" -> value.fullname,
+          ":members" -> SExpList(value.members.map(toSexp)))
 
       case value: CallCompletionInfo =>
         SExp.propList(
-          (":result-type", toSexp(value.resultType)),
-          (":param-sections", SExp(value.paramSections.map(toSexp))))
+          ":result-type" -> toSexp(value.resultType),
+          ":param-sections" -> SExp(value.paramSections.map(toSexp)))
 
       case value: ParamSectionInfo =>
         SExp.propList(
-          (":params", SExp(value.params.map {case (nm, tp) => SExp(nm, toSexp(tp))})),
-          (":is-implicit", value.isImplicit))
+          ":params" -> SExp(value.params.map {case (nm, tp) => SExp(nm, toSexp(tp))}),
+          ":is-implicit" -> value.isImplicit)
 
       case value: InterfaceInfo =>
         SExp.propList(
-          (":type", toSexp(value.tpe)),
-          (":via-view", value.viaView.map(strToSExp).getOrElse('nil)))
+          ":type"     -> toSexp(value.tpe),
+          ":via-view" -> value.viaView.map(strToSExp).getOrElse('nil))
 
       case value: TypeInspectInfo =>
         SExp.propList(
-          (":type", toSexp(value.tpe)),
-          (":info-type", 'typeInspect),
-          (":companion-id", value.companionId match {
-            case Some(id) => id
-            case None => 'nil
-          }), (":interfaces", SExp(value.supers.map(toSexp))))
+          ":type" -> toSexp(value.tpe),
+          ":info-type" -> 'typeInspect,
+          ":companion-id" -> value.companionId.map(intToSExp).getOrElse('nil),
+          ":interfaces" -> SExp(value.supers.map(toSexp)))
 
       case value: RefactorFailure =>
         SExp.propList(
-          (":procedure-id", value.procedureId),
-          (":status", 'failure),
-          (":reason", value.message))
+          ":procedure-id" -> value.procedureId,
+          ":status"       -> 'failure,
+          ":reason"       -> value.message)
 
       case value: RefactorEffect =>
         SExp.propList(
-          (":procedure-id", value.procedureId),
-          (":refactor-type", value.refactorType),
-          (":status", 'success),
-          (":changes", SExpList(value.changes.map(toSexp))))
+          ":procedure-id"  -> value.procedureId,
+          ":refactor-type" -> value.refactorType,
+          ":status"        -> 'success,
+          ":changes"       -> SExpList(value.changes.map(toSexp)))
 
       case value: RefactorResult =>
         SExp.propList(
-          (":procedure-id", value.procedureId),
-          (":refactor-type", value.refactorType),
-          (":status", 'success),
-          (":touched-files", SExpList(value.touched.map(f => strToSExp(f.getAbsolutePath)))))
+          ":procedure-id"  -> value.procedureId,
+          ":refactor-type" -> value.refactorType,
+          ":status"        -> 'success,
+          ":touched-files" -> SExpList(value.touched.map(f => strToSExp(f.getAbsolutePath))))
 
       case value: SymbolSearchResults =>
         SExpList(value.syms.map(toSexp))
@@ -2496,74 +2494,77 @@ trait SwankProtocol extends Protocol {
 
       case value: TypeSearchResult =>
         SExp.propList(
-          (":name", value.name),
-          (":local-name", value.localName),
-          (":decl-as", value.declaredAs),
-          (":pos", toSexp(value.pos)))
+          ":name"       -> value.name,
+          ":local-name" -> value.localName,
+          ":decl-as"    -> value.declaredAs,
+          ":pos"        -> toSexp(value.pos))
 
       case value: MethodSearchResult =>
         SExp.propList(
-          (":name", value.name),
-          (":local-name", value.localName),
-          (":decl-as", value.declaredAs),
-          (":pos", toSexp(value.pos)),
-          (":owner-name", value.owner))
+          ":name"       -> value.name,
+          ":local-name" -> value.localName,
+          ":decl-as"    -> value.declaredAs,
+          ":pos"        -> toSexp(value.pos),
+          ":owner-name" -> value.owner)
 
 
       case value: Undo =>
         SExp.propList(
-          (":id", value.id),
-          (":changes", SExpList(value.changes.map(toSexp))),
-          (":summary", value.summary))
+          ":id"      -> value.id,
+          ":changes" -> SExpList(value.changes.map(toSexp)),
+          ":summary" -> value.summary)
 
       case value: UndoResult =>
         SExp.propList(
-          (":id", value.id),
-          (":touched-files", SExpList(value.touched.map(f => strToSExp(f.getAbsolutePath)))))
+          ":id"            -> value.id,
+          ":touched-files" -> SExpList(value.touched.map(f => strToSExp(f.getAbsolutePath))))
 
       case value: SymbolDesignations =>
         SExp.propList(
-          (":file", value.file),
-          (":syms",
+          ":file" -> value.file,
+          ":syms" ->
             SExpList(value.syms.map { s =>
               SExpList(List(s.symType, s.start, s.end))
-            })))
+            }))
 
-      case DebugVmSuccess() => SExp(
-        key(":status"), ("success"))
+      case DebugVmSuccess() =>
+        SExp.propList(":status" -> "success")
 
-      case DebugVmError(code, details) => SExp(
-        key(":status"), ("error"),
-        key(":error-code"), (code),
-        key(":details"), (details))
+      case DebugVmError(code, details) =>
+        SExp.propList(
+          ":status"     -> "error",
+          ":error-code" -> code,
+          ":details"    -> details)
 
       case method: MethodBytecode =>
         SExp.propList(
-          (":class-name", method.className),
-          (":name", method.methodName),
-          (":signature", method.methodSignature.map(strToSExp).getOrElse('nil)),
-          (":bytecode", SExpList(method.byteCode.map { op =>
-            SExp(op.op, op.description)
-          })))
+          ":class-name" -> method.className,
+          ":name"       -> method.methodName,
+          ":signature"  -> method.methodSignature.map(strToSExp.getOrElse('nil)),
+          ":bytecode"   -> SExpList(method.byteCode.map { op => SExp(op.op, op.description)}))
 
       case ch: FileEdit =>
         SExp.propList(
-          (":file", ch.file.getCanonicalPath()),
-          (":text", ch.text),
-          (":from", ch.from),
-          (":to", ch.to))
+          ":file" -> ch.file.getCanonicalPath(),
+          ":text" -> ch.text,
+          ":from" -> ch.from,
+          ":to"   -> ch.to)
 
       case value: SymbolSearchResult =>
-            throw new IllegalStateException("Unknown SymbolSearchResult: " + value)
+        throw new IllegalStateException("Unknown SymbolSearchResult: " + value)
 
       case value: TypeInfo =>
         throw new IllegalStateException("Unknown TypeInfo: " + value)
 
       case value: EntityInfo =>
         throw new IllegalStateException("Unknown EntityInfo: " + value)
-
     }
   }
+
+  // This still seems pretty terrible though slighly better than what
+  // we had before. I still need to understand the actual uses of toWF
+  // because I feel like it's used for different things and can be
+  // simplified more.
 
   def nullToWF(): WireFormat                          = SwankWireFormat(toSexp(null))
   def toWF(x: AnalyzerReadyEvent): WireFormat         = SwankWireFormat(toSexp(x))

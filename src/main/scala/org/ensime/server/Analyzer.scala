@@ -26,23 +26,19 @@
  */
 
 package org.ensime.server
+
 import java.io.File
 import org.ensime.config.ProjectConfig
-import org.ensime.model.SymbolDesignations
-import org.ensime.model.PatchOp
-import org.ensime.model.OffsetRange
+import org.ensime.model.{OffsetRange, PatchOp, SymbolDesignations}
 import org.ensime.protocol.Protocol
 import org.ensime.protocol.ProtocolConst._
 import org.ensime.util._
 import org.ensime.util.RichFile._
 import scala.actors._
 import scala.actors.Actor._
-import scala.collection.{ Iterable }
-import scala.collection.mutable.{ ListBuffer }
-import scala.tools.nsc.util.RangePosition
-import scala.tools.nsc.{ Settings }
-import scala.tools.nsc.ast._
-import scala.tools.nsc.util.{ OffsetPosition }
+import scala.collection.Iterable
+import scala.tools.nsc.Settings
+import scala.tools.nsc.util.{OffsetPosition, RangePosition}
 
 case class FullTypeCheckCompleteEvent()
 case class CompilerFatalError(e: Throwable)
