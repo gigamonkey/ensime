@@ -29,12 +29,10 @@
 
 package org.ensime.util
 
-import java.io._
-import java.nio.channels.FileChannel
+import java.io.{BufferedReader, File, FileInputStream, FileNotFoundException, FileWriter, IOException, InputStreamReader}
 import java.nio.charset.Charset
 import java.security.MessageDigest
-import scala.collection.Seq
-import scala.collection.mutable
+import scala.collection.{Seq, mutable}
 
 // This routine copied from http://rosettacode.org/wiki/Walk_a_directory/Recursively#Scala
 

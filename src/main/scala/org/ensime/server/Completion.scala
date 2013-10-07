@@ -29,7 +29,6 @@ package org.ensime.server
 import org.ensime.model.CompletionInfoList
 import scala.collection.mutable.HashMap
 import scala.tools.nsc.util.{ Position, RangePosition, SourceFile, BatchSourceFile }
-import org.ensime.util.Arrays
 import scala.tools.nsc.interactive.{ Response, CompilerControl, Global }
 import scala.collection.mutable.{ ListBuffer, LinkedHashSet }
 import org.ensime.model.{ CompletionInfo, CompletionSignature, SymbolSearchResult }
@@ -259,13 +258,6 @@ trait CompletionControl {
     None
   }
 
-  private def spliceSource(s: SourceFile, start: Int, end: Int,
-    replacement: String): SourceFile = {
-    new BatchSourceFile(s.file,
-      Arrays.splice(s.content, start, end,
-        replacement.toArray))
-  }
-
   private val memberRE = "([\\. ]+)([^\\. ]*)$".r
   private val memberConstructorRE = ("new ((?:[a-z0-9]+\\.)*)(" + ident + "*)$").r
 
@@ -274,18 +266,16 @@ trait CompletionControl {
       case Some(m) => {
         val constructing = memberConstructorRE.findFirstMatchIn(preceding).isDefined
         println("Matched member context. Constructing? " + constructing)
-        val dot = m.group(1)
+        val dot    = m.group(1)
         val prefix = m.group(2)
 
-        // Replace prefix with ' ()' so parser doesn't
-        // pick up next line as a continuation of current.
-        val src = spliceSource(p.source,
-          p.point - prefix.length,
-          p.point - 1,
-          " ()")
+        // Replace prefix with ' ()' so parser doesn't pick up next
+        // line as a continuation of current.
+        val text    = p.source.content
+        val newText = text.slice(0, p.point - prefix.length) ++ " ()" ++ text.slice(p.point, text.length)
 
         // Move point back to target of method selection.
-        val newP = p.withSource(src, 0).withPoint(p.point - prefix.length - dot.length)
+        val newP = p.withSource(new BatchSourceFile(p.source.file, newText), 0).withPoint(p.point - prefix.length - dot.length)
 
         Some(MemberContext(newP, prefix, constructing))
       }

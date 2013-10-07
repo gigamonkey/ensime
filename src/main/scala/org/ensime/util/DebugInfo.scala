@@ -25,20 +25,19 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.ensime.debug
+package org.ensime.util
 
-import org.ensime.util._
-import org.ensime.util.RichFile._
+import java.io.{File, FileInputStream}
 import org.ensime.util.FileUtils._
-import scala.collection.mutable.{ HashMap, ArrayBuffer }
-import java.io._
-import org.objectweb.asm._
+import org.ensime.util.RichFile._
+import org.objectweb.asm.{ClassReader, Attribute, AnnotationVisitor, FieldVisitor, MethodVisitor, Label}
 import org.objectweb.asm.commons.EmptyVisitor
-import scala.math._
+import scala.collection.mutable.{HashMap, ArrayBuffer}
+import scala.math.{min, max}
 
 /*
-* Helper for printing debug information for a class.
-*/
+ * Command-line app for printing debug information for a class.
+ */
 object DebugInfo {
 
   def main(args: Array[String]) {

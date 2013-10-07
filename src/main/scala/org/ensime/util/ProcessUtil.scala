@@ -1,5 +1,6 @@
 package org.ensime.util
-import java.io._
+
+import java.io.{Writer, StringWriter, PrintWriter, InputStream, InputStreamReader, BufferedReader}
 
 object ProcessUtil {
 
@@ -23,7 +24,6 @@ object ProcessUtil {
       case  t: Throwable => Left(t)
     }
   }
-
 
   def readAllOutputToStrings(proc: Process): Either[Throwable, (String,String)] = {
     val outputWriter = new StringWriter()
@@ -55,16 +55,16 @@ object ProcessUtil {
   class StreamReaderThread(is: InputStream, ow: Writer) extends Thread {
     override def run() {
       try{
-	val isr = new InputStreamReader(is);
-	val br = new BufferedReader(isr);
-	var line:String = br.readLine()
-	while (line != null) {
-	  ow.write(line + "\n")
-	  ow.flush()
-	  line = br.readLine()
-	}
+        val isr = new InputStreamReader(is);
+        val br = new BufferedReader(isr);
+        var line:String = br.readLine()
+        while (line != null) {
+          ow.write(line + "\n")
+          ow.flush()
+          line = br.readLine()
+        }
       } catch {
-	case e : Throwable => e.printStackTrace()
+        case e : Throwable => e.printStackTrace()
       }
     }
 

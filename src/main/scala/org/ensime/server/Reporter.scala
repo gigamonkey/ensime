@@ -25,7 +25,7 @@
 *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-package org.ensime.util
+package org.ensime.server
 
 import scala.collection.mutable.{ HashEntry, HashMap, HashSet, SynchronizedMap }
 import scala.tools.nsc.interactive.CompilerControl
@@ -102,4 +102,3 @@ class PresentationReporter(handler: ReportHandler) extends Reporter {
   }
 
 }
-

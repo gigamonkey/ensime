@@ -37,7 +37,7 @@ import org.apache.lucene.util.Version
 import org.ensime.model.{MethodSearchResult, SymbolSearchResult, TypeInfo, TypeSearchResult}
 import org.ensime.protocol.ProtocolConst._
 import org.ensime.util._
-import org.json.simple._
+import org.json.simple.JSONValue
 import org.objectweb.asm.Opcodes
 import scala.Char
 import scala.actors._
@@ -47,7 +47,7 @@ import scala.collection.mutable.{HashMap, HashSet, ListBuffer}
 import scala.tools.nsc.util.NoPosition
 import scala.util.matching.Regex
 
-object LuceneIndex extends StringSimilarity {
+object LuceneIndex {
 
   val KeyIndexVersion = "indexVersion"
   val KeyFileHashes   = "fileHashes"
@@ -63,7 +63,7 @@ object LuceneIndex extends StringSimilarity {
   private val cache = new HashMap[(String, String), Int]
 
   def editDist(a: String, b: String): Int = {
-    cache.getOrElseUpdate((a, b), getLevenshteinDistance(a, b))
+    cache.getOrElseUpdate((a, b), StringSimilarity.editDistance(a, b))
   }
 
   def isValidType(s: String): Boolean = {

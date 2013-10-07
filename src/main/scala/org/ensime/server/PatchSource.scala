@@ -25,8 +25,8 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.ensime.util
-//import scala.tools.nsc.util.{ SourceFile, BatchSourceFile }
+package org.ensime.server
+
 import scala.reflect.internal.util.{ SourceFile, BatchSourceFile }
 import org.ensime.model.PatchOp
 import org.ensime.model.PatchInsert

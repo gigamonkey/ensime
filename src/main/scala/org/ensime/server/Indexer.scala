@@ -52,12 +52,7 @@ case class CommitReq()
 /**
  * The main index actor.
  */
-class Indexer(
-  project: Project,
-  protocol: Protocol,
-  config: ProjectConfig)
-    extends Actor
-{
+class Indexer(project: Project, protocol: Protocol, config: ProjectConfig) extends Actor {
 
   import protocol.toWF
 
@@ -126,8 +121,7 @@ class Indexer(
                 case MethodBytecodeReq(sourceName: String, line: Int) => {
                   classFileIndex.locateBytecode(sourceName, line) match{
                     case method :: rest =>
-                      project ! RPCResultEvent(
-                      toWF(method), callId)
+                      project ! RPCResultEvent(toWF(method), callId)
                     case _ => project.sendRPCError(ErrExceptionInIndexer,
                       Some("Failed to find method bytecode"), callId)
                   }

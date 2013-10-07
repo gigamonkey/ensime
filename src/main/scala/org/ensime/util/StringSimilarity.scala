@@ -27,9 +27,9 @@
 
 package org.ensime.util
 
-trait StringSimilarity {
+object StringSimilarity {
 
-  def getLevenshteinDistance (s: String, t: String): Int = {
+  def editDistance (s: String, t: String): Int = {
 
     if (s == null || t == null) {
       throw new IllegalArgumentException("Strings must not be null");

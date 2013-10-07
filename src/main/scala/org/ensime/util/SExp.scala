@@ -80,19 +80,15 @@ object BooleanAtom {
 
 }
 
-abstract class BooleanAtom extends SExp {
-  def toBool: Boolean
-  override def toScala = toBool
-}
+abstract class BooleanAtom extends SExp
 
 case class NilAtom() extends BooleanAtom {
   override def toString = "nil"
-  override def toBool: Boolean = false
+  override def toScala: Boolean = false
 
 }
 case class TruthAtom() extends BooleanAtom {
   override def toString = "t"
-  override def toBool: Boolean = true
   override def toScala: Boolean = true
 }
 case class StringAtom(value: String) extends SExp {
@@ -176,9 +172,6 @@ object SExp extends RegexParsers {
   // Helpers for common case of key,val prop-list.
   // Omit keys for nil values.
   def propList(items: (String, SExp)*): SExpList = {
-    propListX(items)
-  }
-  def propListX(items: Iterable[(String, SExp)]): SExpList = {
     val nonNil = items.filter {
       case (s, NilAtom()) => false
       case (s, SExpList(items)) if items.isEmpty => false
