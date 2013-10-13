@@ -1,0 +1,96 @@
+| Message                                         | Receiver                   | Sender                                                                    |
+|-------------------------------------------------+----------------------------+---------------------------------------------------------------------------|
+| IndexerShutdownReq                              | Indexer                    | Project                                                                   |
+| RebuildStaticIndexReq                           | Indexer                    | Project                                                                   |
+| ReindexClassFilesReq                            | Indexer                    | DebugManager                                                              |
+| CommitReq                                       | Indexer                    | Analyzer                                                                  |
+| AddSymbolsReq                                   | Indexer                    | JavaCompiler                                                              |
+| RemoveSymbolsReq                                | Indexer                    | Indexer                                                                   |
+| TypeCompletionsReq                              | Indexer                    | Completion                                                                |
+| SourceFileCandidatesReq                         | Indexer                    | Model                                                                     |
+| RPCRequestEvent(ImportSuggestionsReq)           | Indexer                    | RPCTarget -> Analyzer                                                     |
+| RPCRequestEvent(PublicSymbolSearchReq)          | Indexer                    | RPCTarget -> Analyzer                                                     |
+| RPCRequestEvent(MethodBytecodeReq)              | Indexer                    | RPCTarget                                                                 |
+| ClassEvent                                      | LuceneIndex.IndexWorkQueue | LuceneIndex.ClassHandler                                                  |
+| MethodEvent                                     | LuceneIndex.IndexWorkQueue | LuceneIndex.ClassHandler                                                  |
+| StopEvent                                       | LuceneIndex.IndexWorkQueue | LuceneIndex.ClassHandler                                                  |
+| AnalyzerShutdownEvent                           | Analyzer                   | Project                                                                   |
+| FullTypeCheckCompleteEvent                      | Analyzer                   | Analyzer, RichPresentationCompiler                                        |
+| RPCRequestEvent(RemoveFileReq)                  | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(ReloadAllReq)                   | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(ReloadFilesReq)                 | Analyzer                   | RPCTarget[1]                                                              |
+| RPCRequestEvent(PatchSourceReq)                 | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(RefactorPerformReq)             | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(RefactorExecReq)                | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(RefactorCancelReq)              | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(CompletionsReq)                 | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(ImportSuggestionsReq)           | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(PublicSymbolSearchReq)          | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(UsesOfSymAtPointReq)            | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(PackageMemberCompletionReq)     | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(InspectTypeReq)                 | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(InspectTypeByIdReq)             | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(SymbolAtPointReq)               | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(InspectPackageByPathReq)        | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(TypeAtPointReq)                 | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(TypeByIdReq)                    | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(TypeByNameReq)                  | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(TypeByNameAtPointReq)           | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(CallCompletionReq)              | Analyzer                   | RPCTarget                                                                 |
+| RPCRequestEvent(SymbolDesignationsReq)          | Analyzer                   | RPCTarget                                                                 |
+| DebuggerShutdownEvent                           | DebugManager               | Project                                                                   |
+| VMDisconnectedException                         | DebugManager               | DebugManager.VMEventManager                                               |
+| VMStartEvent (com.sun.jdi.event.Event)          | DebugManager               | jdi?                                                                      |
+| VMDeathEvent (com.sun.jdi.event.Event)          | DebugManager               | jdi?                                                                      |
+| VMDisconnectEvent (com.sun.jdi.event.Event)     | DebugManager               | jdi?                                                                      |
+| StepEvent (com.sun.jdi.event.Event)             | DebugManager               | jdi?                                                                      |
+| BreakpointEvent (com.sun.jdi.event.Event)       | DebugManager               | jdi?                                                                      |
+| ExceptionEvent (com.sun.jdi.event.Event)        | DebugManager               | jdi?                                                                      |
+| ThreadDeathEvent (com.sun.jdi.event.Event)      | DebugManager               | jdi?                                                                      |
+| ThreadStartEvent (com.sun.jdi.event.Event)      | DebugManager               | jdi?                                                                      |
+| AccessWatchpointEvent (com.sun.jdi.event.Event) | DebugManager               | jdi?                                                                      |
+| ClassPrepareEvent (com.sun.jdi.event.Event)     | DebugManager               | jdi?                                                                      |
+| ClassUnloadEvent (com.sun.jdi.event.Event)      | DebugManager               | jdi?                                                                      |
+| MethodEntryEvent (com.sun.jdi.event.Event)      | DebugManager               | jdi?                                                                      |
+| MethodExitEvent (com.sun.jdi.event.Event)       | DebugManager               | jdi?                                                                      |
+| RPCRequest(DebugStartVMReq)                     | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugAttachVMReq)                    | DebugManager               | RPCTarget                                                                  |
+| RPCRequest(DebugActiveVMReq)                    | DebugManager               | RPCTarget                                                                  |
+| RPCRequest(DebugStopVMReq)                      | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugRunReq)                         | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugContinueReq)                    | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugBreakReq)                       | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugClearBreakReq)                  | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugClearAllBreaksReq)              | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugListBreaksReq)                  | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugNextReq)                        | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugStepReq)                        | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugStepOutReq)                     | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugLocateNameReq)                  | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugBacktraceReq)                   | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugValueReq)                       | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugToStringReq)                    | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugSetValueReq)                    | DebugManager               | RPCTarget                                                                 |
+| BuilderShutdownEvent                            | IncrementalBuilder         | Project                                                                   |
+| RPCRequestEvent(RebuildAllReq)                  | IncrementalBuilder         | RPCTarget                                                                 |
+| RPCRequestEvent(AddSourceFilesReq)              | IncrementalBuilder         | RPCTarget                                                                 |
+| RPCRequestEvent(RemoveSourceFilesReq)           | IncrementalBuilder         | RPCTarget                                                                 |
+| RPCRequestEvent(UpdateSourceFilesReq)           | IncrementalBuilder         | RPCTarget                                                                 |
+| IndexerShutdownReq                              | Indexer                    | Project                                                                   |
+| RebuildStaticIndexReq                           | Indexer                    | Project                                                                   |
+| ReindexClassFilesReq                            | Indexer                    | DebugManager                                                              |
+| CommitReq                                       | Indexer                    | Analyzer                                                                  |
+| AddSymbolsReq                                   | Indexer                    | Indexer, JavaCompiler                                                     |
+| RemoveSymbolsReq                                | Indexer                    | Indexer                                                                   |
+| TypeCompletionsReq                              | Indexer                    | Completion                                                                |
+| SourceFileCandidatesReq                         | Indexer                    | Model                                                                     |
+| RPCRequestEvent(ImportSuggestionsReq)           | Indexer                    | RPCTarget                                                                 |
+| RPCRequestEvent(PublicSymbolSearchReq)          | Indexer                    | RPCTarget                                                                 |
+| RPCRequestEvent(MethodBytecodeReq)              | Indexer                    | RPCTarget                                                                 |
+| IncomingMessageEvent                            | Project                    | Server                                                                    |
+| AddUndo                                         | Project                    | Refactoring                                                               |
+| RPCResultEvent                                  | Project                    | Analyzer, DebugManager, IncrementalBuilder, Indexer, Project, Refactoring |
+| AsyncEvent                                      | Project                    | Analyzer, DebugManager, IncrementalBuilder, Indexer, Project              |
+| RPCErrorEvent                                   | Project                    | Project                                                                   |
+
+[1] And Project but wrapped in RPCRequestEvent?
