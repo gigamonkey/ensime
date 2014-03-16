@@ -54,8 +54,8 @@
 | MethodEntryEvent (com.sun.jdi.event.Event)      | DebugManager               | jdi?                                                                      |
 | MethodExitEvent (com.sun.jdi.event.Event)       | DebugManager               | jdi?                                                                      |
 | RPCRequest(DebugStartVMReq)                     | DebugManager               | RPCTarget                                                                 |
-| RPCRequest(DebugAttachVMReq)                    | DebugManager               | RPCTarget                                                                  |
-| RPCRequest(DebugActiveVMReq)                    | DebugManager               | RPCTarget                                                                  |
+| RPCRequest(DebugAttachVMReq)                    | DebugManager               | RPCTarget                                                                 |
+| RPCRequest(DebugActiveVMReq)                    | DebugManager               | RPCTarget                                                                 |
 | RPCRequest(DebugStopVMReq)                      | DebugManager               | RPCTarget                                                                 |
 | RPCRequest(DebugRunReq)                         | DebugManager               | RPCTarget                                                                 |
 | RPCRequest(DebugContinueReq)                    | DebugManager               | RPCTarget                                                                 |
