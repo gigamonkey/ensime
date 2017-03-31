@@ -154,7 +154,7 @@ trait SwankProtocol extends Protocol {
   def handleIncomingMessage(msg: Any) {
     msg match {
       case sexp: SExp => handleMessageForm(sexp)
-      case _ => System.err.println("WTF: Unexpected message: " + msg)
+      case _          => System.err.println("WTF: Unexpected message: " + msg)
     }
   }
 
